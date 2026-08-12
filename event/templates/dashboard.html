@@ -1,0 +1,430 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Dashboard</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+  <link rel="stylesheet" href="{% static 'css/style.css' %}?v=8">
+</head>
+<body>
+  <div class="app-wrapper">
+    <nav class="sidebar">
+      <div class="brand">
+        {% if user.profile.avatar %}
+          <img src="{{ user.profile.avatar.url }}" alt="Profile" width="64" height="64" style="width:64px !important; height:64px !important; border-radius:50%; object-fit:cover; display:block; margin:0 auto 10px auto; border:2px solid rgba(255,255,255,0.2);">
+        {% else %}
+          <img src="{% static 'img/avatar.jpeg' %}" alt="Profile" width="64" height="64" style="width:64px !important; height:64px !important; border-radius:50%; object-fit:cover; display:block; margin:0 auto 10px auto; border:2px solid rgba(255,255,255,0.2);">
+        {% endif %}
+        <h4>Admin Panel</h4>
+        <p>Welcome, {{ user.username }}!</p>
+      </div>
+      <ul class="nav flex-column">
+        <li class="nav-item">
+          <a class="nav-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}" href="{% url 'dashboard' %}"><i class="bi bi-grid-fill me-2"></i>Dashboard</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link d-flex justify-content-between align-items-center" data-bs-toggle="collapse" href="#eventCategoryMenu" role="button" aria-expanded="{% if request.resolver_match.url_name in 'create_category,category_list,edit_category,delete_category' %}true{% else %}false{% endif %}">
+            <span><i class="bi bi-folder-fill me-2"></i>Event Category</span><i class="bi bi-chevron-down small"></i>
+          </a>
+          <div class="collapse {% if request.resolver_match.url_name in 'create_category,category_list,edit_category,delete_category' %}show{% endif %}" id="eventCategoryMenu">
+            <ul class="nav flex-column sub-menu">
+              <li class="nav-item"><a class="nav-link {% if request.resolver_match.url_name == 'create_category' %}active{% endif %}" href="{% url 'create_category' %}"><i class="bi bi-pencil-square me-2"></i>Create Category</a></li>
+              <li class="nav-item"><a class="nav-link {% if request.resolver_match.url_name == 'category_list' %}active{% endif %}" href="{% url 'category_list' %}"><i class="bi bi-list-ul me-2"></i>Category List</a></li>
+            </ul>
+          </div>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link d-flex justify-content-between align-items-center" data-bs-toggle="collapse" href="#eventsMenu" role="button" aria-expanded="{% if request.resolver_match.url_name in 'create_event,event_list,edit_event,delete_event,event_detail,event_history,update_event_status,add_event_member,remove_event_member,joined_events,add_event_wish,event_wish_list,approve_wish,reject_wish,remove_event_wish,update_member_registration_status' %}true{% else %}false{% endif %}">
+            <span><i class="bi bi-calendar-event-fill me-2"></i>Events</span><i class="bi bi-chevron-down small"></i>
+          </a>
+          <div class="collapse {% if request.resolver_match.url_name in 'create_event,event_list,edit_event,delete_event,event_detail,event_history,update_event_status,add_event_member,remove_event_member,joined_events,add_event_wish,event_wish_list,approve_wish,reject_wish,remove_event_wish,update_member_registration_status' %}show{% endif %}" id="eventsMenu">
+            <ul class="nav flex-column sub-menu">
+              <li class="nav-item"><a class="nav-link {% if request.resolver_match.url_name == 'create_event' %}active{% endif %}" href="{% url 'create_event' %}"><i class="bi bi-pencil-square me-2"></i>Create Event</a></li>
+              <li class="nav-item"><a class="nav-link {% if request.resolver_match.url_name == 'event_list' %}active{% endif %}" href="{% url 'event_list' %}"><i class="bi bi-list-ul me-2"></i>Event List</a></li>
+              <li class="nav-item"><a class="nav-link {% if request.resolver_match.url_name == 'add_event_member' %}active{% endif %}" href="{% url 'add_event_member' %}"><i class="bi bi-person-plus-fill me-2"></i>Add Event Member</a></li>
+              <li class="nav-item"><a class="nav-link {% if request.resolver_match.url_name == 'joined_events' %}active{% endif %}" href="{% url 'joined_events' %}"><i class="bi bi-list-ul me-2"></i>Joined Events</a></li>
+              <li class="nav-item"><a class="nav-link {% if request.resolver_match.url_name == 'add_event_wish' %}active{% endif %}" href="{% url 'add_event_wish' %}"><i class="bi bi-heart-fill me-2"></i>Add Event Wish User</a></li>
+              <li class="nav-item"><a class="nav-link {% if request.resolver_match.url_name == 'event_wish_list' %}active{% endif %}" href="{% url 'event_wish_list' %}"><i class="bi bi-list-ul me-2"></i>Event Wish List</a></li>
+            </ul>
+          </div>
+        </li>
+        <li class="nav-item"><a class="nav-link {% if request.resolver_match.url_name == 'vendor_list' or request.resolver_match.url_name == 'create_vendor' or request.resolver_match.url_name == 'edit_vendor' or request.resolver_match.url_name == 'delete_vendor' %}active{% endif %}" href="{% url 'vendor_list' %}"><i class="bi bi-truck me-2"></i>Vendors</a></li>
+        <li class="nav-item"><a class="nav-link {% if request.resolver_match.url_name == 'venue_list' or request.resolver_match.url_name == 'create_venue' or request.resolver_match.url_name == 'edit_venue' or request.resolver_match.url_name == 'delete_venue' %}active{% endif %}" href="{% url 'venue_list' %}"><i class="bi bi-geo-alt-fill me-2"></i>Venues</a></li>
+        <li class="nav-item"><a class="nav-link {% if request.resolver_match.url_name == 'resource_list' or request.resolver_match.url_name == 'create_resource' or request.resolver_match.url_name == 'edit_resource' or request.resolver_match.url_name == 'delete_resource' or request.resolver_match.url_name == 'allocate_resource' %}active{% endif %}" href="{% url 'resource_list' %}"><i class="bi bi-box-seam-fill me-2"></i>Resources</a></li>
+        <li class="nav-item"><a class="nav-link {% if request.resolver_match.url_name == 'budget_overview' or request.resolver_match.url_name == 'create_expense' or request.resolver_match.url_name == 'create_sponsorship' %}active{% endif %}" href="{% url 'budget_overview' %}"><i class="bi bi-cash-coin me-2"></i>Budget & Sponsors</a></li>
+        <li class="nav-item"><a class="nav-link {% if request.resolver_match.url_name == 'completed_events' %}active{% endif %}" href="{% url 'completed_events' %}"><i class="bi bi-flag-fill me-2"></i>Completed Events</a></li>
+        <li class="nav-item"><a class="nav-link {% if request.resolver_match.url_name == 'contact' %}active{% endif %}" href="{% url 'contact' %}"><i class="bi bi-envelope-fill me-2"></i>Contact</a></li>
+      </ul>
+    </nav>
+
+    <div class="main-content">
+      <div class="topbar">
+        <a href="{% url 'dashboard' %}">Home</a>
+        <a href="{% url 'contact' %}">Contact</a>
+        <div class="search-box"><input type="text" class="form-control" placeholder="Search..."></div>
+
+        <div class="topbar-icons">
+
+          <div class="dropdown">
+            <a href="#" class="icon-link dropdown-toggle" data-bs-toggle="dropdown" style="text-decoration:none;">
+              <i class="bi bi-bell-fill"></i>
+              <span class="badge-count" id="notifBadgeCount" {% if unread_notification_count == 0 %}style="display:none;"{% endif %}>{{ unread_notification_count }}</span>
+            </a>
+            <ul class="dropdown-menu dropdown-menu-end">
+              <li><h6>Notifications</h6></li>
+              {% if unread_notification_count > 0 %}
+                <li><a class="dropdown-item" href="{% url 'notifications' %}">{{ unread_notification_count }} unread notification{{ unread_notification_count|pluralize }}</a></li>
+              {% else %}
+                <li><span class="dropdown-item text-muted">You're all caught up</span></li>
+              {% endif %}
+              <li><hr class="dropdown-divider"></li>
+              <li><a class="dropdown-item text-center" href="{% url 'notifications' %}">See All Notifications</a></li>
+            </ul>
+          </div>
+
+          <div class="dropdown">
+            <a href="#" class="icon-link dropdown-toggle" data-bs-toggle="dropdown" style="text-decoration:none;">
+              <i class="bi bi-grid-3x3-gap-fill"></i>
+            </a>
+            <div class="dropdown-menu dropdown-menu-end">
+              <div class="apps-grid">
+                <a href="{% url 'dashboard' %}"><i class="bi bi-grid-fill"></i>Dashboard</a>
+                <a href="{% url 'category_list' %}"><i class="bi bi-folder-fill"></i>Categories</a>
+                <a href="{% url 'event_list' %}"><i class="bi bi-calendar-event-fill"></i>Events</a>
+                <a href="{% url 'vendor_list' %}"><i class="bi bi-truck"></i>Vendors</a>
+                <a href="{% url 'add_event_member' %}"><i class="bi bi-person-plus-fill"></i>Members</a>
+                <a href="{% url 'event_wish_list' %}"><i class="bi bi-heart-fill"></i>Wishes</a>
+                <a href="{% url 'contact' %}"><i class="bi bi-envelope-fill"></i>Contact</a>
+              </div>
+            </div>
+          </div>
+
+          <div class="dropdown">
+            <a href="#" class="dropdown-toggle" data-bs-toggle="dropdown" style="text-decoration:none; color: var(--navbar-text, #212529); display:flex; align-items:center; gap:8px;">
+              {% if user.profile.avatar %}
+                <img src="{{ user.profile.avatar.url }}" style="width:34px; height:34px; border-radius:50%; object-fit:cover; flex-shrink:0;">
+              {% else %}
+                <img src="{% static 'img/avatar.jpeg' %}" style="width:34px; height:34px; border-radius:50%; object-fit:cover; flex-shrink:0;">
+              {% endif %}
+              <span>{{ user.username }}</span>
+            </a>
+            <ul class="dropdown-menu dropdown-menu-end profile-dropdown-menu">
+              <li class="profile-dropdown-header">
+                {% if user.profile.avatar %}
+                  <img src="{{ user.profile.avatar.url }}" class="profile-dropdown-avatar">
+                {% else %}
+                  <img src="{% static 'img/avatar.jpeg' %}" class="profile-dropdown-avatar">
+                {% endif %}
+                <div>
+                  <div class="name">{{ user.username }}</div>
+                  <div class="email">{{ user.email|default:"No email set" }}</div>
+                </div>
+              </li>
+              <li><hr class="dropdown-divider"></li>
+              <li><a class="dropdown-item" href="{% url 'profile' %}"><i class="bi bi-person-fill"></i>My Profile</a></li>
+              <li><a class="dropdown-item" href="{% url 'settings' %}"><i class="bi bi-gear-fill"></i>Settings</a></li>
+              <li><a class="dropdown-item" href="{% url 'change_password' %}"><i class="bi bi-key-fill"></i>Change Password</a></li>
+              <li><a class="dropdown-item" href="{% url 'notifications' %}"><i class="bi bi-bell-fill"></i>Notifications</a></li>
+              <li><hr class="dropdown-divider"></li>
+              <li>
+                <form method="post" action="{% url 'logout' %}">
+                  {% csrf_token %}
+                  <button type="submit" class="dropdown-item logout-item"><i class="bi bi-box-arrow-right"></i>Logout</button>
+                </form>
+              </li>
+            </ul>
+          </div>
+
+        </div>
+      </div>
+
+      <div class="content-card mb-4">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+          <div>
+            <h2 class="mb-1">Hello {{ user.username }}</h2>
+            <p class="text-muted mb-0">Monitor event performance, registrations, and platform activity.</p>
+          </div>
+          <a href="{% url 'create_event' %}" class="btn-dark-pill"><i class="bi bi-plus-lg"></i>New Event</a>
+        </div>
+
+        <div class="row g-3 mb-3">
+          <div class="col-md-3 col-sm-6">
+            <div class="stat-card-v2">
+              <div class="icon-badge soft-blue-icon"><i class="bi bi-folder-fill"></i></div>
+              <h2>{{ category_count }}</h2>
+              <p class="label">Event Categories</p>
+              <a href="{% url 'category_list' %}" class="btn btn-sm soft-blue-btn">View Details</a>
+            </div>
+          </div>
+          <div class="col-md-3 col-sm-6">
+            <div class="stat-card-v2">
+              <div class="icon-badge soft-green-icon"><i class="bi bi-calendar-event-fill"></i></div>
+              <h2>{{ event_count }}</h2>
+              <p class="label">Events</p>
+              <a href="{% url 'event_list' %}" class="btn btn-sm soft-green-btn">View Details</a>
+            </div>
+          </div>
+          <div class="col-md-3 col-sm-6">
+            <div class="stat-card-v2">
+              <div class="icon-badge soft-orange-icon"><i class="bi bi-people-fill"></i></div>
+              <h2>{{ unique_participant_count }}</h2>
+              <p class="label">Registered Participants</p>
+              <a href="{% url 'add_event_member' %}" class="btn btn-sm soft-orange-btn">View Details</a>
+            </div>
+          </div>
+          <div class="col-md-3 col-sm-6">
+            <div class="stat-card-v2">
+              <div class="icon-badge soft-red-icon"><i class="bi bi-flag-fill"></i></div>
+              <h2>{{ completed_count }}</h2>
+              <p class="label">Completed Events</p>
+              <a href="{% url 'completed_events' %}" class="btn btn-sm soft-red-btn">View Details</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="row g-3">
+          <div class="col-md-3 col-sm-6">
+            <div class="stat-card-v2">
+              <div class="icon-badge soft-blue-icon"><i class="bi bi-hourglass-split"></i></div>
+              <h2>{{ upcoming_count }}</h2>
+              <p class="label">Upcoming Events</p>
+              <a href="{% url 'joined_events' %}" class="btn btn-sm soft-blue-btn">View Details</a>
+            </div>
+          </div>
+          <div class="col-md-3 col-sm-6">
+            <div class="stat-card-v2">
+              <div class="icon-badge soft-purple-icon"><i class="bi bi-truck"></i></div>
+              <h2>{{ vendor_count }}</h2>
+              <p class="label">Onboarded Vendors</p>
+              <a href="{% url 'vendor_list' %}" class="btn btn-sm soft-purple-btn">View Details</a>
+            </div>
+          </div>
+          <div class="col-md-3 col-sm-6">
+            <div class="stat-card-v2">
+              <div class="icon-badge soft-orange-icon"><i class="bi bi-heart-fill"></i></div>
+              <h2>{{ pending_wishes_count }}</h2>
+              <p class="label">Pending Event Wishes</p>
+              <a href="{% url 'event_wish_list' %}" class="btn btn-sm soft-orange-btn">Review Now</a>
+            </div>
+          </div>
+          <div class="col-md-3 col-sm-6">
+            <div class="stat-card-v2">
+              <div class="icon-badge soft-green-icon"><i class="bi bi-cash-coin"></i></div>
+              <h2>₹{{ total_budget }}</h2>
+              <p class="label">Total Budget Allocated</p>
+              <a href="{% url 'budget_overview' %}" class="btn btn-sm soft-green-btn">View Details</a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="row g-3 mb-4">
+        <div class="col-lg-8">
+          <div class="content-card h-100">
+            <div class="chart-card-header mb-3">
+              <h3 class="mb-0">Event Category Analytics</h3>
+              <p class="text-muted mb-0">Registrations distributed by category</p>
+            </div>
+            <canvas id="categoryChart" height="110"></canvas>
+          </div>
+        </div>
+        <div class="col-lg-4">
+          <div class="content-card h-100">
+            <h3 class="mb-3">Insights</h3>
+            {% for insight in insights %}
+              <div class="insight-item insight-{{ insight.type }}">
+                <div class="insight-title">
+                  {% if insight.type == 'warning' %}<i class="bi bi-exclamation-triangle-fill"></i>{% endif %}
+                  {% if insight.type == 'success' %}<i class="bi bi-check-circle-fill"></i>{% endif %}
+                  {% if insight.type == 'info' %}<i class="bi bi-info-circle-fill"></i>{% endif %}
+                  {% if insight.type == 'primary' %}<i class="bi bi-graph-up"></i>{% endif %}
+                  {{ insight.title }}
+                </div>
+                <p class="insight-text">{{ insight.text }}</p>
+              </div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+
+      <div class="content-card">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h3 class="mb-0">Recent Events</h3>
+          <a href="{% url 'create_event' %}" class="btn-dark-pill"><i class="bi bi-plus-lg"></i>Create New Event</a>
+        </div>
+
+        <table class="table align-middle">
+          <thead><tr><th>ID</th><th>Event Name</th><th>Category</th><th>Status</th></tr></thead>
+          <tbody>
+            {% for ev in recent_events %}
+            <tr>
+              <td>{{ ev.id }}</td>
+              <td>
+                <span class="event-avatar-circle">{{ ev.name|first|upper }}</span>
+                <a href="{% url 'event_detail' ev.pk %}">{{ ev.name }}</a>
+              </td>
+              <td>{{ ev.category.name }}</td>
+              <td>
+                <span class="status-pill status-{{ ev.status }}">{{ ev.status }}</span>
+              </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="4" class="text-center text-muted">No events yet.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <div class="content-card mt-4">
+        <h3 class="mb-3">Recent Activities</h3>
+        {% if recent_activities %}
+          <div class="d-flex flex-column gap-2">
+            {% for act in recent_activities %}
+            <div class="d-flex align-items-center gap-3 p-2" style="border-bottom:1px solid #eef0f4;">
+              <div style="width:34px; height:34px; border-radius:50%; background:#eef0ff; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                <i class="bi {{ act.icon }}" style="color:#4f46e5; font-size:0.9rem;"></i>
+              </div>
+              <div class="flex-grow-1">
+                <div style="font-size:0.88rem; color:#1e1b2e;">{{ act.text }}</div>
+                <div style="font-size:0.75rem; color:#6c757d;">{{ act.timestamp|timesince }} ago</div>
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="empty-state">
+            <i class="bi bi-activity"></i>
+            <p class="mb-0">No recent activity yet.</p>
+          </div>
+        {% endif %}
+      </div>
+
+      <footer class="admin-footer">
+        <div>© 2026 Event Registration Platform · Built as part of the Infosys Springboard Training Program</div>
+        <div>Event Registration Platform | Admin Panel</div>
+      </footer>
+
+    </div>
+  </div>
+
+  {{ chart_labels|json_script:"category-labels-data" }}
+  {{ chart_data|json_script:"category-data-values" }}
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+
+  <!-- Theme Customizer -->
+  <button id="customizeToggleBtn" class="customizer-toggle-btn" title="Customize">
+    <i class="bi bi-gear-fill"></i>
+  </button>
+
+  <div id="customizerPanel" class="customizer-panel">
+    <div class="customizer-header">
+      <h5>Customize AdminLTE</h5>
+      <button id="customizerCloseBtn" class="btn-close"></button>
+    </div>
+    <div class="customizer-body">
+
+      <h6>Appearance</h6>
+      <label class="customizer-check">
+        <input type="checkbox" id="darkModeToggle"> Dark Mode
+      </label>
+
+      <h6>Layout</h6>
+      <label class="customizer-check"><input type="checkbox" id="fixedNavbar"> Fixed Navbar</label>
+      <label class="customizer-check"><input type="checkbox" id="fixedSidebar"> Fixed Sidebar</label>
+      <label class="customizer-check"><input type="checkbox" id="sidebarMini"> Sidebar Mini</label>
+      <label class="customizer-check"><input type="checkbox" id="sidebarCompact"> Sidebar Compact</label>
+      <label class="customizer-check"><input type="checkbox" id="noNavbarBorder"> No Navbar Border</label>
+      <label class="customizer-check"><input type="checkbox" id="navbarSmallText"> Navbar Small Text</label>
+      <label class="customizer-check"><input type="checkbox" id="footerSmallText"> Footer Small Text</label>
+
+      <h6>Navbar Color</h6>
+      <div class="pill-row">
+        <span class="pill-swatch swatch-navbar" data-bg="#4f46e5" data-text="#ffffff" style="background:#4f46e5"></span>
+        <span class="pill-swatch swatch-navbar" data-bg="#23a35a" data-text="#ffffff" style="background:#23a35a"></span>
+        <span class="pill-swatch swatch-navbar" data-bg="#6f42c1" data-text="#ffffff" style="background:#6f42c1"></span>
+        <span class="pill-swatch swatch-navbar" data-bg="#e0455a" data-text="#ffffff" style="background:#e0455a"></span>
+        <span class="pill-swatch swatch-navbar" data-bg="#f28c1e" data-text="#ffffff" style="background:#f28c1e"></span>
+        <span class="pill-swatch swatch-navbar" data-bg="#17a2b8" data-text="#ffffff" style="background:#17a2b8"></span>
+        <span class="pill-swatch swatch-navbar" data-bg="#1e1b2e" data-text="#ffffff" style="background:#1e1b2e"></span>
+        <span class="pill-swatch swatch-navbar" data-bg="#ffffff" data-text="#212529" style="background:#ffffff; border:1px solid #ccc;"></span>
+      </div>
+
+      <h6>Sidebar Color</h6>
+      <div class="pill-row">
+        <span class="pill-swatch swatch-sidebar" data-color="#1e1b2e" style="background:#1e1b2e"></span>
+        <span class="pill-swatch swatch-sidebar" data-color="#001f3f" style="background:#001f3f"></span>
+        <span class="pill-swatch swatch-sidebar" data-color="#4b0082" style="background:#4b0082"></span>
+        <span class="pill-swatch swatch-sidebar" data-color="#4f46e5" style="background:#4f46e5"></span>
+        <span class="pill-swatch swatch-sidebar" data-color="#145a32" style="background:#145a32"></span>
+        <span class="pill-swatch swatch-sidebar" data-color="#a45a00" style="background:#a45a00"></span>
+        <span class="pill-swatch swatch-sidebar" data-color="#0f6674" style="background:#0f6674"></span>
+      </div>
+
+      <h6>Dashboard Theme</h6>
+      <div class="pill-row">
+        <span class="pill-swatch swatch-theme" data-color="#4f46e5" style="background:#4f46e5"></span>
+        <span class="pill-swatch swatch-theme" data-color="#23a35a" style="background:#23a35a"></span>
+        <span class="pill-swatch swatch-theme" data-color="#6f42c1" style="background:#6f42c1"></span>
+        <span class="pill-swatch swatch-theme" data-color="#e0455a" style="background:#e0455a"></span>
+        <span class="pill-swatch swatch-theme" data-color="#f28c1e" style="background:#f28c1e"></span>
+      </div>
+
+      <button id="resetThemeBtn" class="btn btn-sm btn-outline-light customizer-reset-btn">Reset to Default</button>
+    </div>
+  </div>
+  <script src="{% static 'js/customizer.js' %}"></script>
+
+  <script>
+    const categoryLabels = JSON.parse(document.getElementById('category-labels-data').textContent);
+    const categoryData = JSON.parse(document.getElementById('category-data-values').textContent);
+
+    const ctx = document.getElementById('categoryChart');
+    if (ctx) {
+      new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: categoryLabels,
+          datasets: [{
+            label: 'Registrations',
+            data: categoryData,
+            backgroundColor: '#4f46e5',
+            borderRadius: 6,
+            maxBarThickness: 46
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: { legend: { display: false } },
+          scales: {
+            y: { beginAtZero: true, ticks: { precision: 0 } }
+          }
+        }
+      });
+    }
+  </script>
+
+  <script>
+    function refreshNotificationBadge() {
+      fetch("{% url 'notification_unread_count_api' %}", { credentials: 'same-origin' })
+        .then(response => response.json())
+        .then(data => {
+          const badge = document.getElementById('notifBadgeCount');
+          if (!badge) return;
+          if (data.unread_count > 0) {
+            badge.textContent = data.unread_count;
+            badge.style.display = 'inline-block';
+          } else {
+            badge.style.display = 'none';
+          }
+        })
+        .catch(() => {});
+    }
+    setInterval(refreshNotificationBadge, 30000);
+  </script>
+
+</body>
+</html>

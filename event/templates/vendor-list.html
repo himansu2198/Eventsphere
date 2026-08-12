@@ -1,0 +1,257 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Vendors</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+  <link rel="stylesheet" href="{% static 'css/style.css' %}?v=7">
+</head>
+<body>
+  <div class="app-wrapper">
+    <nav class="sidebar">
+      <div class="brand">
+        {% if user.profile.avatar %}
+          <img src="{{ user.profile.avatar.url }}" alt="Profile" width="64" height="64" style="width:64px !important; height:64px !important; border-radius:50%; object-fit:cover; display:block; margin:0 auto 10px auto; border:2px solid rgba(255,255,255,0.2);">
+        {% else %}
+          <img src="{% static 'img/avatar.jpeg' %}" alt="Profile" width="64" height="64" style="width:64px !important; height:64px !important; border-radius:50%; object-fit:cover; display:block; margin:0 auto 10px auto; border:2px solid rgba(255,255,255,0.2);">
+        {% endif %}
+        <h4>Admin Panel</h4>
+        <p>Welcome, {{ user.username }}!</p>
+      </div>
+      <ul class="nav flex-column">
+        <li class="nav-item">
+          <a class="nav-link" href="{% url 'dashboard' %}"><i class="bi bi-grid-fill me-2"></i>Dashboard</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link d-flex justify-content-between align-items-center" data-bs-toggle="collapse" href="#eventCategoryMenu" role="button" aria-expanded="false">
+            <span><i class="bi bi-folder-fill me-2"></i>Event Category</span><i class="bi bi-chevron-down small"></i>
+          </a>
+          <div class="collapse" id="eventCategoryMenu">
+            <ul class="nav flex-column sub-menu">
+              <li class="nav-item"><a class="nav-link" href="{% url 'create_category' %}"><i class="bi bi-pencil-square me-2"></i>Create Category</a></li>
+              <li class="nav-item"><a class="nav-link" href="{% url 'category_list' %}"><i class="bi bi-list-ul me-2"></i>Category List</a></li>
+            </ul>
+          </div>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link d-flex justify-content-between align-items-center" data-bs-toggle="collapse" href="#eventsMenu" role="button" aria-expanded="false">
+            <span><i class="bi bi-calendar-event-fill me-2"></i>Events</span><i class="bi bi-chevron-down small"></i>
+          </a>
+          <div class="collapse" id="eventsMenu">
+            <ul class="nav flex-column sub-menu">
+              <li class="nav-item"><a class="nav-link" href="{% url 'create_event' %}"><i class="bi bi-pencil-square me-2"></i>Create Event</a></li>
+              <li class="nav-item"><a class="nav-link" href="{% url 'event_list' %}"><i class="bi bi-list-ul me-2"></i>Event List</a></li>
+              <li class="nav-item"><a class="nav-link" href="{% url 'add_event_member' %}"><i class="bi bi-person-plus-fill me-2"></i>Add Event Member</a></li>
+              <li class="nav-item"><a class="nav-link" href="{% url 'joined_events' %}"><i class="bi bi-list-ul me-2"></i>Joined Events</a></li>
+              <li class="nav-item"><a class="nav-link" href="{% url 'add_event_wish' %}"><i class="bi bi-heart-fill me-2"></i>Add Event Wish User</a></li>
+              <li class="nav-item"><a class="nav-link" href="{% url 'event_wish_list' %}"><i class="bi bi-list-ul me-2"></i>Event Wish List</a></li>
+            </ul>
+          </div>
+        </li>
+        <li class="nav-item"><a class="nav-link active" href="{% url 'vendor_list' %}"><i class="bi bi-truck me-2"></i>Vendors</a></li>
+        <li class="nav-item"><a class="nav-link" href="{% url 'budget_overview' %}"><i class="bi bi-cash-coin me-2"></i>Budget & Sponsors</a></li>
+        <li class="nav-item"><a class="nav-link" href="{% url 'completed_events' %}"><i class="bi bi-flag-fill me-2"></i>Completed Events</a></li>
+        <li class="nav-item"><a class="nav-link" href="{% url 'contact' %}"><i class="bi bi-envelope-fill me-2"></i>Contact</a></li>
+      </ul>
+    </nav>
+
+    <div class="main-content">
+      <div class="topbar">
+        <a href="{% url 'dashboard' %}">Home</a>
+        <a href="{% url 'contact' %}">Contact</a>
+        <div class="search-box"><input type="text" class="form-control" placeholder="Search..."></div>
+
+        <div class="topbar-icons">
+
+          <div class="dropdown">
+            <a href="#" class="icon-link dropdown-toggle" data-bs-toggle="dropdown" style="text-decoration:none;">
+              <i class="bi bi-bell-fill"></i>
+              <span class="badge-count" id="notifBadgeCount" {% if unread_notification_count == 0 %}style="display:none;"{% endif %}>{{ unread_notification_count }}</span>
+            </a>
+            <ul class="dropdown-menu dropdown-menu-end">
+              <li><h6>Notifications</h6></li>
+              {% if unread_notification_count > 0 %}
+                <li><a class="dropdown-item" href="{% url 'notifications' %}">{{ unread_notification_count }} unread notification{{ unread_notification_count|pluralize }}</a></li>
+              {% else %}
+                <li><span class="dropdown-item text-muted">You're all caught up</span></li>
+              {% endif %}
+              <li><hr class="dropdown-divider"></li>
+              <li><a class="dropdown-item text-center" href="{% url 'notifications' %}">See All Notifications</a></li>
+            </ul>
+          </div>
+
+          <div class="dropdown">
+            <a href="#" class="icon-link dropdown-toggle" data-bs-toggle="dropdown" style="text-decoration:none;">
+              <i class="bi bi-grid-3x3-gap-fill"></i>
+            </a>
+            <div class="dropdown-menu dropdown-menu-end">
+              <div class="apps-grid">
+                <a href="{% url 'dashboard' %}"><i class="bi bi-grid-fill"></i>Dashboard</a>
+                <a href="{% url 'category_list' %}"><i class="bi bi-folder-fill"></i>Categories</a>
+                <a href="{% url 'event_list' %}"><i class="bi bi-calendar-event-fill"></i>Events</a>
+                <a href="{% url 'vendor_list' %}"><i class="bi bi-truck"></i>Vendors</a>
+                <a href="{% url 'add_event_member' %}"><i class="bi bi-person-plus-fill"></i>Members</a>
+                <a href="{% url 'event_wish_list' %}"><i class="bi bi-heart-fill"></i>Wishes</a>
+                <a href="{% url 'contact' %}"><i class="bi bi-envelope-fill"></i>Contact</a>
+              </div>
+            </div>
+          </div>
+
+          <div class="dropdown">
+            <a href="#" class="dropdown-toggle" data-bs-toggle="dropdown" style="text-decoration:none; color: var(--navbar-text, #212529); display:flex; align-items:center; gap:8px;">
+              {% if user.profile.avatar %}
+                <img src="{{ user.profile.avatar.url }}" style="width:34px; height:34px; border-radius:50%; object-fit:cover; flex-shrink:0;">
+              {% else %}
+                <img src="{% static 'img/avatar.jpeg' %}" style="width:34px; height:34px; border-radius:50%; object-fit:cover; flex-shrink:0;">
+              {% endif %}
+              <span>{{ user.username }}</span>
+            </a>
+            <ul class="dropdown-menu dropdown-menu-end profile-dropdown-menu">
+              <li class="profile-dropdown-header">
+                {% if user.profile.avatar %}
+                  <img src="{{ user.profile.avatar.url }}" class="profile-dropdown-avatar">
+                {% else %}
+                  <img src="{% static 'img/avatar.jpeg' %}" class="profile-dropdown-avatar">
+                {% endif %}
+                <div>
+                  <div class="name">{{ user.username }}</div>
+                  <div class="email">{{ user.email|default:"No email set" }}</div>
+                </div>
+              </li>
+              <li><hr class="dropdown-divider"></li>
+              <li><a class="dropdown-item" href="{% url 'profile' %}"><i class="bi bi-person-fill"></i>My Profile</a></li>
+              <li><a class="dropdown-item" href="{% url 'settings' %}"><i class="bi bi-gear-fill"></i>Settings</a></li>
+              <li><a class="dropdown-item" href="{% url 'change_password' %}"><i class="bi bi-key-fill"></i>Change Password</a></li>
+              <li><a class="dropdown-item" href="{% url 'notifications' %}"><i class="bi bi-bell-fill"></i>Notifications</a></li>
+              <li><hr class="dropdown-divider"></li>
+              <li>
+                <form method="post" action="{% url 'logout' %}">
+                  {% csrf_token %}
+                  <button type="submit" class="dropdown-item logout-item"><i class="bi bi-box-arrow-right"></i>Logout</button>
+                </form>
+              </li>
+            </ul>
+          </div>
+
+        </div>
+      </div>
+
+      <div class="content-card">
+        {% if messages %}
+          {% for message in messages %}
+            <div class="alert alert-success">{{ message }}</div>
+          {% endfor %}
+        {% endif %}
+
+        <div class="page-header-row">
+          <div>
+            <h2>Vendors & Suppliers</h2>
+            <p class="page-subtitle">Manage external suppliers, catering, and logistics partners.</p>
+          </div>
+          <div class="header-actions">
+            <div class="view-toggle-group">
+              <button type="button" id="gridViewBtn" class="active"><i class="bi bi-grid-fill me-1"></i>Grid</button>
+              <button type="button" id="tableViewBtn"><i class="bi bi-list-ul me-1"></i>Table</button>
+            </div>
+            <a href="{% url 'create_vendor' %}" class="btn-dark-pill"><i class="bi bi-plus-lg"></i>Onboard New Vendor</a>
+          </div>
+        </div>
+
+        <!-- Grid view -->
+        <div id="gridView" class="card-grid">
+          {% for v in vendors %}
+          <div class="grid-card">
+            <div class="card-top-row">
+              <span class="category-pill text-capitalize">{{ v.service_type }}</span>
+              <span class="status-badge-pill {% if v.contract_status == 'active' %}status-active{% elif v.contract_status == 'pending' %}status-pending{% elif v.contract_status == 'cancelled' %}status-completed{% else %}status-completed{% endif %}">
+                {{ v.contract_status }}
+              </span>
+            </div>
+            <h4>{{ v.name }}</h4>
+            <div class="card-meta-line"><i class="bi bi-person-fill"></i>Contact: {{ v.contact_person|default:"-" }}</div>
+
+            <div class="card-info-box">
+              <div class="info-row">
+                <div>
+                  <div class="info-label">Phone</div>
+                  <div class="info-value">{{ v.phone|default:"-" }}</div>
+                </div>
+                <div>
+                  <div class="info-label">Email</div>
+                  <div class="info-value" style="font-size:0.78rem; word-break:break-all;">{{ v.email|default:"-" }}</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="card-meta-line mb-0">
+              <i class="bi bi-calendar-event-fill"></i>{{ v.event.name|default:"No linked event" }}
+            </div>
+
+            <div class="card-actions-row">
+              <a href="{% url 'edit_vendor' v.pk %}" class="btn-dark-pill"><i class="bi bi-eye-fill"></i>Details</a>
+              <div class="action-btn-group">
+                <a href="{% url 'edit_vendor' v.pk %}" class="icon-action-btn edit-btn"><i class="bi bi-pencil-fill"></i></a>
+                <a href="{% url 'delete_vendor' v.pk %}" class="icon-action-btn delete-btn" onclick="return confirm('Remove this vendor?');"><i class="bi bi-trash-fill"></i></a>
+              </div>
+            </div>
+          </div>
+          {% empty %}
+          <p class="text-muted">No vendors onboarded yet.</p>
+          {% endfor %}
+        </div>
+
+        <!-- Table view (hidden by default) -->
+        <table class="table d-none" id="tableViewTable">
+          <thead>
+            <tr><th>Name</th><th>Contact</th><th>Service</th><th>Event</th><th>Contract Status</th><th>Actions</th></tr>
+          </thead>
+          <tbody>
+            {% for v in vendors %}
+            <tr>
+              <td>{{ v.name }}</td>
+              <td>{{ v.contact_person }}<br><small class="text-muted">{{ v.email }} · {{ v.phone }}</small></td>
+              <td class="text-capitalize">{{ v.service_type }}</td>
+              <td>{{ v.event.name|default:"-" }}</td>
+              <td>
+                <span class="badge {% if v.contract_status == 'active' %}bg-success{% elif v.contract_status == 'pending' %}bg-warning{% elif v.contract_status == 'cancelled' %}bg-danger{% else %}bg-secondary{% endif %} text-capitalize">
+                  {{ v.contract_status }}
+                </span>
+              </td>
+              <td>
+                <a href="{% url 'edit_vendor' v.pk %}" class="btn btn-sm btn-outline-primary">Edit</a>
+                <a href="{% url 'delete_vendor' v.pk %}" class="btn btn-sm btn-outline-danger">Delete</a>
+              </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="6" class="text-center text-muted">No vendors onboarded yet.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    const gridBtn = document.getElementById('gridViewBtn');
+    const tableBtn = document.getElementById('tableViewBtn');
+    const gridView = document.getElementById('gridView');
+    const tableView = document.getElementById('tableViewTable');
+
+    gridBtn.addEventListener('click', () => {
+      gridBtn.classList.add('active');
+      tableBtn.classList.remove('active');
+      gridView.classList.remove('d-none');
+      tableView.classList.add('d-none');
+    });
+
+    tableBtn.addEventListener('click', () => {
+      tableBtn.classList.add('active');
+      gridBtn.classList.remove('active');
+      tableView.classList.remove('d-none');
+      gridView.classList.add('d-none');
+    });
+  </script>
+</body>
+</html>
