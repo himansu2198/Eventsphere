@@ -15,6 +15,7 @@ urlpatterns = [
     path('', views.landing_page, name='landing'),
     path('dashboard/', views.dashboard, name='dashboard'),
     path('participant-dashboard/', views.participant_dashboard, name='participant_dashboard'),
+    path('faq-chat/', views.chatbot_faq, name='chatbot_faq'),
     path('register-event/<int:event_id>/', views.participant_register_event, name='participant_register_event'),
     path('cancel-registration/<int:member_id>/', views.participant_cancel_registration, name='cancel_registration'),
     path('qr-checkin/', views.qr_checkin, name='qr_checkin'),
@@ -41,6 +42,8 @@ urlpatterns = [
     path('event-edit/<int:pk>/', views.edit_event, name='edit_event'),
     path('event-delete/<int:pk>/', views.delete_event_confirm, name='delete_event'),
     path('event-status/<int:pk>/', views.update_event_status, name='update_event_status'),
+    path('events-schedule/', views.participant_event_list, name='participant_event_list'),
+    path('events-schedule/<int:pk>/', views.participant_event_detail, name='participant_event_detail'),
 
     path('add-event-member/', views.add_event_member, name='add_event_member'),
     path('remove-event-member/<int:pk>/', views.remove_event_member, name='remove_event_member'),
@@ -91,6 +94,17 @@ urlpatterns = [
     path('sponsors/create/', views.create_sponsor, name='create_sponsor'),
     path('sponsors/edit/<int:pk>/', views.edit_sponsor, name='edit_sponsor'),
     path('sponsors/delete/<int:pk>/', views.delete_sponsor_confirm, name='delete_sponsor'),
+
+    path('reports/', views.reports_home, name='reports_home'),
+    path('reports/events/csv/', views.export_events_csv, name='export_events_csv'),
+    path('reports/events/xlsx/', views.export_events_xlsx, name='export_events_xlsx'),
+    path('reports/events/pdf/', views.export_events_pdf, name='export_events_pdf'),
+    path('reports/members/csv/', views.export_members_csv, name='export_members_csv'),
+    path('reports/members/xlsx/', views.export_members_xlsx, name='export_members_xlsx'),
+    path('reports/members/pdf/', views.export_members_pdf, name='export_members_pdf'),
+    path('reports/contacts/csv/', views.export_contacts_csv, name='export_contacts_csv'),
+    path('reports/contacts/xlsx/', views.export_contacts_xlsx, name='export_contacts_xlsx'),
+    path('reports/contacts/pdf/', views.export_contacts_pdf, name='export_contacts_pdf'),
 
     # ---------- REST API ----------
     path('api/categories/', CategoryListAPI.as_view(), name='api_categories'),

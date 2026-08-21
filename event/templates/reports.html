@@ -1,0 +1,56 @@
+{% extends 'admin_base.html' %}
+{% load static %}
+
+{% block title %}Reports{% endblock %}
+
+{% block content %}
+  <div class="content-card">
+    <div class="page-header-row">
+      <div>
+        <h2>Reports & Export</h2>
+        <p class="page-subtitle">Download event, member, and contact data in CSV, Excel, or PDF format.</p>
+      </div>
+    </div>
+
+    <div class="card-grid">
+      <div class="grid-card">
+        <div class="card-top-row"><span class="category-pill"><i class="bi bi-calendar-event-fill me-1"></i>Events</span></div>
+        <h4>Event Report</h4>
+        <div class="card-meta-line">All events with status, dates, venue, and registration counts.</div>
+        <div class="card-actions-row" style="border-top:none; padding-top:0;">
+          <div class="action-btn-group" style="width:100%; gap:8px;">
+            <a href="{% url 'export_events_csv' %}" class="btn-dark-pill flex-fill justify-content-center"><i class="bi bi-filetype-csv"></i>CSV</a>
+            <a href="{% url 'export_events_xlsx' %}" class="btn-dark-pill flex-fill justify-content-center" style="background:#23a35a;"><i class="bi bi-file-earmark-excel-fill"></i>Excel</a>
+            <a href="{% url 'export_events_pdf' %}" class="btn-dark-pill flex-fill justify-content-center" style="background:#e0455a;"><i class="bi bi-file-earmark-pdf-fill"></i>PDF</a>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid-card">
+        <div class="card-top-row"><span class="category-pill"><i class="bi bi-people-fill me-1"></i>Members</span></div>
+        <h4>Member Report</h4>
+        <div class="card-meta-line">All registered members with role, department, and status.</div>
+        <div class="card-actions-row" style="border-top:none; padding-top:0;">
+          <div class="action-btn-group" style="width:100%; gap:8px;">
+            <a href="{% url 'export_members_csv' %}" class="btn-dark-pill flex-fill justify-content-center"><i class="bi bi-filetype-csv"></i>CSV</a>
+            <a href="{% url 'export_members_xlsx' %}" class="btn-dark-pill flex-fill justify-content-center" style="background:#23a35a;"><i class="bi bi-file-earmark-excel-fill"></i>Excel</a>
+            <a href="{% url 'export_members_pdf' %}" class="btn-dark-pill flex-fill justify-content-center" style="background:#e0455a;"><i class="bi bi-file-earmark-pdf-fill"></i>PDF</a>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid-card">
+        <div class="card-top-row"><span class="category-pill"><i class="bi bi-envelope-fill me-1"></i>Contact</span></div>
+        <h4>Contact Report</h4>
+        <div class="card-meta-line">All submitted inquiries with review status.</div>
+        <div class="card-actions-row" style="border-top:none; padding-top:0;">
+          <div class="action-btn-group" style="width:100%; gap:8px;">
+            <a href="{% url 'export_contacts_csv' %}" class="btn-dark-pill flex-fill justify-content-center"><i class="bi bi-filetype-csv"></i>CSV</a>
+            <a href="{% url 'export_contacts_xlsx' %}" class="btn-dark-pill flex-fill justify-content-center" style="background:#23a35a;"><i class="bi bi-file-earmark-excel-fill"></i>Excel</a>
+            <a href="{% url 'export_contacts_pdf' %}" class="btn-dark-pill flex-fill justify-content-center" style="background:#e0455a;"><i class="bi bi-file-earmark-pdf-fill"></i>PDF</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}

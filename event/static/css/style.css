@@ -590,6 +590,45 @@ body.sidebar-mini .sidebar .sub-menu {
   cursor: pointer;
 }
 
+/* ---------- Appearance: Light/Dark mode selector (inside Customizer) ---------- */
+
+.theme-mode-row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.theme-mode-option {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 12px 8px;
+  border-radius: 10px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid transparent;
+  color: #b3aed6;
+  cursor: pointer;
+  font-size: 0.78rem;
+  font-weight: 600;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.theme-mode-option:hover {
+  background: rgba(255,255,255,0.1);
+}
+
+.theme-mode-option.active {
+  background: rgba(79, 70, 229, 0.22);
+  border-color: #4f46e5;
+  color: #fff;
+}
+
+.theme-mode-option i {
+  font-size: 1.25rem;
+}
+
 .pill-row {
   display: flex;
   flex-wrap: wrap;
@@ -1869,4 +1908,291 @@ body.dark-mode .auth-footer {
   background: #1e1c2b !important;
   border-top-color: #2e2a44 !important;
   color: #8a86a8 !important;
+}
+/* ================================
+   Forms — Two-Column Layout, Validation, Loading States
+   ================================ */
+
+.form-grid-2col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px 20px;
+}
+
+.form-grid-2col .form-field-full {
+  grid-column: 1 / -1;
+}
+
+@media (max-width: 768px) {
+  .form-grid-2col {
+    grid-template-columns: 1fr;
+  }
+}
+
+.required-mark {
+  color: #e0455a;
+  margin-left: 3px;
+}
+
+.field-error-msg {
+  color: #e0455a;
+  font-size: 0.78rem;
+  margin-top: 5px;
+  display: none;
+}
+
+.field-error-msg.show {
+  display: block;
+}
+
+.form-control.is-invalid,
+.form-select.is-invalid {
+  border-color: #e0455a !important;
+}
+
+.form-control.is-valid,
+.form-select.is-valid {
+  border-color: #23a35a !important;
+}
+
+.btn-submit-loading {
+  position: relative;
+  pointer-events: none;
+  opacity: 0.75;
+}
+
+.btn-submit-loading .btn-spinner {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255,255,255,0.4);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: btnSpin 0.6s linear infinite;
+  margin-right: 8px;
+  vertical-align: -2px;
+}
+
+@keyframes btnSpin {
+  to { transform: rotate(360deg); }
+}
+
+/* ================================
+   Toast Notifications (global)
+   ================================ */
+
+.toast-stack {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 2000;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-width: 340px;
+}
+
+.app-toast {
+  background: #fff;
+  border-radius: 10px;
+  padding: 14px 16px;
+  box-shadow: 0 8px 24px rgba(30, 27, 46, 0.15);
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 0.86rem;
+  border-left: 4px solid #4f46e5;
+  animation: toastSlideIn 0.25s ease;
+}
+
+@keyframes toastSlideIn {
+  from { transform: translateX(30px); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+.app-toast.toast-success { border-left-color: #23a35a; }
+.app-toast.toast-error { border-left-color: #e0455a; }
+.app-toast.toast-warning { border-left-color: #f28c1e; }
+
+.app-toast i {
+  font-size: 1.1rem;
+  flex-shrink: 0;
+}
+.app-toast.toast-success i { color: #23a35a; }
+.app-toast.toast-error i { color: #e0455a; }
+.app-toast.toast-warning i { color: #f28c1e; }
+
+/* ================================
+   Data Table Utilities — Search, Sort, Pagination, Sticky Header
+   ================================ */
+
+.data-table-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 14px;
+}
+
+.data-table-toolbar .table-search-input {
+  flex-grow: 1;
+  max-width: 320px;
+}
+
+.table-responsive-wrapper {
+  overflow-x: auto;
+  border-radius: 8px;
+  border: 1px solid #eef0f4;
+}
+
+.sortable-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+}
+
+.sortable-table thead th .sort-icon {
+  font-size: 0.7rem;
+  margin-left: 4px;
+  opacity: 0.4;
+}
+
+.sortable-table thead th.sorted-asc .sort-icon,
+.sortable-table thead th.sorted-desc .sort-icon {
+  opacity: 1;
+  color: var(--accent-color, #4f46e5);
+}
+
+.table-pagination {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 14px;
+  flex-wrap: wrap;
+  gap: 10px;
+  font-size: 0.82rem;
+  color: #6c757d;
+}
+
+.table-pagination .pagination-buttons {
+  display: flex;
+  gap: 4px;
+}
+
+.table-pagination button {
+  border: 1px solid #dcdfe6;
+  background: #fff;
+  border-radius: 6px;
+  padding: 5px 11px;
+  font-size: 0.82rem;
+  cursor: pointer;
+}
+
+.table-pagination button.active-page {
+  background: var(--accent-color, #4f46e5);
+  color: #fff;
+  border-color: var(--accent-color, #4f46e5);
+}
+
+.table-pagination button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* ================================
+   Responsiveness — Sidebar Collapse, Overflow Fixes
+   ================================ */
+
+.mobile-sidebar-toggle {
+  display: none;
+  background: var(--accent-color, #4f46e5);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  width: 38px;
+  height: 38px;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+}
+
+@media (max-width: 992px) {
+  .mobile-sidebar-toggle {
+    display: flex;
+  }
+
+  .sidebar {
+    position: fixed;
+    left: -260px;
+    top: 0;
+    height: 100vh;
+    z-index: 1040;
+    transition: left 0.25s ease;
+  }
+
+  .sidebar.mobile-open {
+    left: 0;
+  }
+
+  .sidebar-backdrop {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.4);
+    z-index: 1035;
+  }
+
+  .sidebar-backdrop.show {
+    display: block;
+  }
+
+  .main-content {
+    padding: 16px;
+  }
+
+  .topbar {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .topbar .search-box {
+    order: 3;
+    flex-basis: 100%;
+    max-width: 100%;
+  }
+
+  .card-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .page-header-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .header-actions {
+    flex-wrap: wrap;
+  }
+
+  .action-btn-group {
+    flex-wrap: wrap;
+  }
+}
+
+body.dark-mode .app-toast {
+  background: #1e1c2b;
+  color: #d8d6e6;
+}
+
+body.dark-mode .table-responsive-wrapper {
+  border-color: #2e2a44;
+}
+
+body.dark-mode .table-pagination button {
+  background: #26233a;
+  border-color: #322e4a;
+  color: #d8d6e6;
 }

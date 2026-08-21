@@ -1,13 +1,18 @@
+import csv
+from datetime import datetime
+from django.http import HttpResponse
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import authenticate, login
 from django.contrib.auth.models import User
 from django.contrib.auth.forms import PasswordChangeForm
 from django.contrib.auth import update_session_auth_hash
 from django.contrib import messages
-from django.db.models import Sum, Count
+from django.db.models import Sum, Count, Q
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse
 from django.utils import timezone
+from django.conf import settings
+from groq import Groq
 from .decorators import admin_required
 from .utils import generate_qr_for_member, notify, notify_admins
 from .models import (
@@ -207,12 +212,50 @@ def participant_dashboard(request):
 
     my_registrations = EventMember.objects.filter(user=request.user).select_related('event')
     registered_event_ids = list(my_registrations.values_list('event_id', flat=True))
-    upcoming_events = Event.objects.filter(status__in=['active', 'upcoming'])
 
     return render(request, 'participant-dashboard.html', {
         'registrations': my_registrations,
-        'events': upcoming_events,
         'registered_event_ids': registered_event_ids,
+        'unread_notification_count': _unread_notif_count(request),
+    })
+
+
+@login_required(login_url='/login/')
+def participant_event_list(request):
+    profile = getattr(request.user, 'profile', None)
+    if profile and profile.role == 'admin':
+        return redirect('dashboard')
+
+    today = timezone.now().date()
+    events = (
+        Event.objects.filter(end_date__gte=today)
+        .exclude(status='completed')
+        .select_related('category')
+        .order_by('start_date')
+    )
+    registered_event_ids = list(
+        EventMember.objects.filter(user=request.user).values_list('event_id', flat=True)
+    )
+
+    return render(request, 'participant-event-list.html', {
+        'events': events,
+        'registered_event_ids': registered_event_ids,
+        'unread_notification_count': _unread_notif_count(request),
+    })
+
+
+@login_required(login_url='/login/')
+def participant_event_detail(request, pk):
+    profile = getattr(request.user, 'profile', None)
+    if profile and profile.role == 'admin':
+        return redirect('dashboard')
+
+    event = get_object_or_404(Event, pk=pk)
+    already_registered = EventMember.objects.filter(event=event, user=request.user).exists()
+
+    return render(request, 'participant-event-detail.html', {
+        'event': event,
+        'already_registered': already_registered,
         'unread_notification_count': _unread_notif_count(request),
     })
 
@@ -248,6 +291,8 @@ def participant_register_event(request, event_id):
         email=request.user.email,
         role='general',
     )
+    # Self-registration always uses the 'general' role, which is an
+    # attendance-tracked role, so QR is always generated here — unchanged.
     generate_qr_for_member(member)
 
     notify_admins(f'{request.user.username} registered for "{event.name}".', link='/event-list/')
@@ -270,20 +315,71 @@ def participant_cancel_registration(request, member_id):
 @admin_required
 def qr_checkin(request):
     result = None
+    checked_in_member = None
+
     if request.method == 'POST':
         code = request.POST.get('code', '').strip()
+        mode = request.POST.get('mode', 'entry')
         member_id = code.replace('MEMBER-', '')
         try:
-            member = EventMember.objects.get(pk=member_id)
-            already = UserMark.objects.filter(member=member, status='present').exists()
-            if already:
-                result = f"Already checked in: {member.name} ({member.event.name})"
+            member = EventMember.objects.select_related('event').get(pk=member_id)
+
+            if mode == 'exit':
+                mark = UserMark.objects.filter(member=member, status='present').order_by('-marked_at').first()
+                if not mark:
+                    result = f"{member.name} has not checked in yet — cannot check out."
+                elif mark.checked_out_at:
+                    result = f"Already checked out: {member.name} ({member.event.name})"
+                else:
+                    mark.checked_out_at = timezone.now()
+                    mark.save()
+                    result = f"Checked out: {member.name} ({member.event.name})"
             else:
-                UserMark.objects.create(member=member, status='present')
-                result = f"Checked in: {member.name} ({member.event.name})"
+                # Registration status gate — blocks entry for anyone not
+                # in an eligible status (currently only 'confirmed').
+                if not member.is_eligible_for_checkin:
+                    result = (
+                        f"🔴 Check-in blocked: {member.name}'s registration status is "
+                        f"\"{member.get_registration_status_display()}\", which is not eligible for entry. "
+                        f"Only Confirmed registrations can check in."
+                    )
+                else:
+                    already = UserMark.objects.filter(member=member, status='present', checked_out_at__isnull=True).exists()
+                    if already:
+                        result = f"Already checked in: {member.name} ({member.event.name})"
+                    else:
+                        UserMark.objects.create(member=member, status='present')
+                        result = f"Checked in: {member.name} ({member.event.name})"
+
+            checked_in_member = member
         except (EventMember.DoesNotExist, ValueError):
             result = "Invalid QR code / Member not found."
-    return render(request, 'qr-checkin.html', {'result': result})
+
+    selected_event_id = request.GET.get('event')
+    checkins_qs = (
+        UserMark.objects.filter(status='present')
+        .select_related('member', 'member__event')
+        .order_by('-marked_at')
+    )
+    if selected_event_id:
+        checkins_qs = checkins_qs.filter(member__event_id=selected_event_id)
+
+    recent_checkins = checkins_qs[:30]
+
+    events_with_counts = (
+        Event.objects.filter(status__in=['active', 'upcoming'])
+        .annotate(verified_count=Count('members__marks', filter=Q(members__marks__status='present'), distinct=True))
+        .order_by('name')
+    )
+
+    return render(request, 'qr-checkin.html', {
+        'result': result,
+        'checked_in_member': checked_in_member,
+        'recent_checkins': recent_checkins,
+        'events_with_counts': events_with_counts,
+        'selected_event_id': int(selected_event_id) if selected_event_id else None,
+        'unread_notification_count': _unread_notif_count(request),
+    })
 
 
 # ---------- Profile / Settings ----------
@@ -297,6 +393,16 @@ def profile_view(request):
             profile.avatar = request.FILES.get('avatar')
             profile.save()
             messages.success(request, 'Profile photo updated!')
+
+        new_email = request.POST.get('email')
+        if new_email and new_email != request.user.email:
+            if User.objects.filter(email=new_email).exclude(pk=request.user.pk).exists():
+                messages.error(request, 'That email is already in use by another account.')
+            else:
+                request.user.email = new_email
+                request.user.save()
+                messages.success(request, 'Email updated successfully!')
+
         return redirect('profile')
 
     back_url = 'dashboard' if profile.role == 'admin' else 'participant_dashboard'
@@ -443,33 +549,112 @@ def category_delete_confirm(request, pk):
 
 # ---------- Events ----------
 
-def _check_venue_conflict(venue, start_date, end_date, exclude_pk=None):
-    if not venue:
+def _check_venue_capacity(venue_ref, max_attendees):
+    if not venue_ref or not max_attendees:
         return None
-    qs = Event.objects.filter(venue=venue, start_date__lte=end_date, end_date__gte=start_date)
+    try:
+        max_attendees = int(max_attendees)
+    except (TypeError, ValueError):
+        return None
+    if venue_ref.capacity and max_attendees > venue_ref.capacity:
+        return f"⚠️ Capacity exceeded. {venue_ref.name} can accommodate only {venue_ref.capacity} attendees."
+    return None
+
+
+def _check_venue_schedule_conflict(venue_ref, start_date, end_date, start_time, end_time, exclude_pk=None):
+    if not venue_ref:
+        return None
+
+    qs = Event.objects.filter(venue_ref=venue_ref, start_date__lte=end_date, end_date__gte=start_date)
     if exclude_pk:
         qs = qs.exclude(pk=exclude_pk)
-    conflict = qs.first()
-    if conflict:
-        return f"Note: '{venue}' is also booked for '{conflict.name}' during overlapping dates ({conflict.start_date} to {conflict.end_date})."
+
+    if not start_time or not end_time:
+        conflict = qs.first()
+        if conflict:
+            return f"🔴 Venue unavailable. {venue_ref.name} is already booked for \"{conflict.name}\" on an overlapping date."
+        return None
+
+    def _to_date(value):
+        if isinstance(value, str):
+            return datetime.strptime(value, '%Y-%m-%d').date()
+        return value
+
+    def _to_time(value):
+        if isinstance(value, str):
+            return datetime.strptime(value, '%H:%M').time()
+        return value
+
+    try:
+        new_start = datetime.combine(_to_date(start_date), _to_time(start_time))
+        new_end = datetime.combine(_to_date(end_date), _to_time(end_time))
+    except (ValueError, TypeError):
+        return None
+
+    for other in qs:
+        if not other.start_time or not other.end_time:
+            continue
+        other_start = datetime.combine(other.start_date, other.start_time)
+        other_end = datetime.combine(other.end_date, other.end_time)
+
+        if new_start < other_end and other_start < new_end:
+            return (
+                f"🔴 Venue unavailable. {venue_ref.name} is already booked for \"{other.name}\" "
+                f"from {other.start_time.strftime('%I:%M %p')} – {other.end_time.strftime('%I:%M %p')}."
+            )
+
     return None
 
 
 @admin_required
 def create_event(request):
     categories = EventCategory.objects.all()
+    venues = Venue.objects.filter(status='available')
     if request.method == 'POST':
         category_id = request.POST.get('category')
         if not category_id:
             messages.error(request, 'Please select a category.')
             return render(request, 'create-event.html', {
-                'categories': categories,
+                'categories': categories, 'venues': venues,
                 'unread_notification_count': _unread_notif_count(request),
             })
         try:
             venue = request.POST.get('venue')
-            start_date = request.POST.get('start_date')
-            end_date = request.POST.get('end_date')
+            venue_ref_id = request.POST.get('venue_ref') or None
+            start_date_str = request.POST.get('start_date')
+            end_date_str = request.POST.get('end_date')
+            start_time = request.POST.get('start_time') or None
+            end_time = request.POST.get('end_time') or None
+            max_attendees = request.POST.get('max_attendees') or 0
+
+            start_date_obj = datetime.strptime(start_date_str, '%Y-%m-%d').date()
+            if start_date_obj < timezone.now().date():
+                messages.error(request, "⚠️ This event's start date is in the past. Please choose today's date or a future date.")
+                return render(request, 'create-event.html', {
+                    'categories': categories, 'venues': venues,
+                    'unread_notification_count': _unread_notif_count(request),
+                })
+
+            venue_ref_obj = Venue.objects.filter(pk=venue_ref_id).first() if venue_ref_id else None
+
+            if venue_ref_obj:
+                capacity_warning = _check_venue_capacity(venue_ref_obj, max_attendees)
+                if capacity_warning:
+                    messages.error(request, capacity_warning)
+                    return render(request, 'create-event.html', {
+                        'categories': categories, 'venues': venues,
+                        'unread_notification_count': _unread_notif_count(request),
+                    })
+
+                conflict_warning = _check_venue_schedule_conflict(
+                    venue_ref_obj, start_date_str, end_date_str, start_time, end_time
+                )
+                if conflict_warning:
+                    messages.error(request, conflict_warning)
+                    return render(request, 'create-event.html', {
+                        'categories': categories, 'venues': venues,
+                        'unread_notification_count': _unread_notif_count(request),
+                    })
 
             event = Event.objects.create(
                 name=request.POST.get('name'),
@@ -478,18 +663,19 @@ def create_event(request):
                 priority=request.POST.get('priority') or 1,
                 scheduled_status=request.POST.get('scheduled_status'),
                 venue=venue,
-                start_date=start_date,
-                end_date=end_date,
+                venue_ref_id=venue_ref_id,
+                start_date=start_date_str,
+                end_date=end_date_str,
                 location=request.POST.get('location'),
                 points=request.POST.get('points') or 0,
-                max_attendees=request.POST.get('max_attendees') or 0,
+                max_attendees=max_attendees,
                 registration_deadline=request.POST.get('registration_deadline') or None,
                 status=request.POST.get('status'),
                 image=request.FILES.get('image'),
                 session_name=request.POST.get('session_name'),
                 speaker_name=request.POST.get('speaker_name'),
-                start_time=request.POST.get('start_time') or None,
-                end_time=request.POST.get('end_time') or None,
+                start_time=start_time,
+                end_time=end_time,
                 venue_name=request.POST.get('venue_name'),
                 budget=request.POST.get('budget') or 0,
                 sponsors=request.POST.get('sponsors', ''),
@@ -497,20 +683,16 @@ def create_event(request):
 
             EventHistory.objects.create(event=event, action='created', changed_by=request.user, notes='Event created.')
 
-            conflict_msg = _check_venue_conflict(venue, event.start_date, event.end_date, exclude_pk=event.pk)
-            if conflict_msg:
-                messages.warning(request, conflict_msg)
-
             messages.success(request, 'Event created successfully!')
             return redirect('event_list')
         except Exception as e:
             messages.error(request, f'Could not save event: {e}')
             return render(request, 'create-event.html', {
-                'categories': categories,
+                'categories': categories, 'venues': venues,
                 'unread_notification_count': _unread_notif_count(request),
             })
     return render(request, 'create-event.html', {
-        'categories': categories,
+        'categories': categories, 'venues': venues,
         'unread_notification_count': _unread_notif_count(request),
     })
 
@@ -550,15 +732,44 @@ def event_history_view(request, pk):
 def edit_event(request, pk):
     event = get_object_or_404(Event, pk=pk)
     categories = EventCategory.objects.all()
+    venues = Venue.objects.filter(status='available')
     if request.method == 'POST':
         category_id = request.POST.get('category')
         if not category_id:
             messages.error(request, 'Please select a category.')
             return render(request, 'edit-event.html', {
-                'event': event, 'categories': categories,
+                'event': event, 'categories': categories, 'venues': venues,
                 'unread_notification_count': _unread_notif_count(request),
             })
         try:
+            venue_ref_id = request.POST.get('venue_ref') or None
+            start_date = request.POST.get('start_date')
+            end_date = request.POST.get('end_date')
+            start_time = request.POST.get('start_time') or None
+            end_time = request.POST.get('end_time') or None
+            max_attendees = request.POST.get('max_attendees') or 0
+
+            venue_ref_obj = Venue.objects.filter(pk=venue_ref_id).first() if venue_ref_id else None
+
+            if venue_ref_obj:
+                capacity_warning = _check_venue_capacity(venue_ref_obj, max_attendees)
+                if capacity_warning:
+                    messages.error(request, capacity_warning)
+                    return render(request, 'edit-event.html', {
+                        'event': event, 'categories': categories, 'venues': venues,
+                        'unread_notification_count': _unread_notif_count(request),
+                    })
+
+                conflict_warning = _check_venue_schedule_conflict(
+                    venue_ref_obj, start_date, end_date, start_time, end_time, exclude_pk=event.pk
+                )
+                if conflict_warning:
+                    messages.error(request, conflict_warning)
+                    return render(request, 'edit-event.html', {
+                        'event': event, 'categories': categories, 'venues': venues,
+                        'unread_notification_count': _unread_notif_count(request),
+                    })
+
             old_status = event.status
             event.name = request.POST.get('name')
             event.category_id = category_id
@@ -566,19 +777,20 @@ def edit_event(request, pk):
             event.priority = request.POST.get('priority') or 1
             event.scheduled_status = request.POST.get('scheduled_status')
             event.venue = request.POST.get('venue')
-            event.start_date = request.POST.get('start_date')
-            event.end_date = request.POST.get('end_date')
+            event.venue_ref_id = venue_ref_id
+            event.start_date = start_date
+            event.end_date = end_date
             event.location = request.POST.get('location')
             event.points = request.POST.get('points') or 0
-            event.max_attendees = request.POST.get('max_attendees') or 0
+            event.max_attendees = max_attendees
             event.registration_deadline = request.POST.get('registration_deadline') or None
             event.status = request.POST.get('status')
             if request.FILES.get('image'):
                 event.image = request.FILES.get('image')
             event.session_name = request.POST.get('session_name')
             event.speaker_name = request.POST.get('speaker_name')
-            event.start_time = request.POST.get('start_time') or None
-            event.end_time = request.POST.get('end_time') or None
+            event.start_time = start_time
+            event.end_time = end_time
             event.venue_name = request.POST.get('venue_name')
             event.budget = request.POST.get('budget') or 0
             event.sponsors = request.POST.get('sponsors', '')
@@ -594,20 +806,16 @@ def edit_event(request, pk):
                 for member in event.members.filter(user__isnull=False):
                     notify(member.user, f'Event "{event.name}" status changed to {event.status}.', link='/participant-dashboard/')
 
-            conflict_msg = _check_venue_conflict(event.venue, event.start_date, event.end_date, exclude_pk=event.pk)
-            if conflict_msg:
-                messages.warning(request, conflict_msg)
-
             messages.success(request, 'Event updated successfully!')
             return redirect('event_list')
         except Exception as e:
             messages.error(request, f'Could not update event: {e}')
             return render(request, 'edit-event.html', {
-                'event': event, 'categories': categories,
+                'event': event, 'categories': categories, 'venues': venues,
                 'unread_notification_count': _unread_notif_count(request),
             })
     return render(request, 'edit-event.html', {
-        'event': event, 'categories': categories,
+        'event': event, 'categories': categories, 'venues': venues,
         'unread_notification_count': _unread_notif_count(request),
     })
 
@@ -660,17 +868,28 @@ def add_event_member(request):
                 'events': events,
                 'unread_notification_count': _unread_notif_count(request),
             })
-        EventMember.objects.create(
+
+        role_value = request.POST.get('role')
+
+        member = EventMember.objects.create(
             event_id=event_id,
             name=request.POST.get('name'),
             email=request.POST.get('email'),
             phone=request.POST.get('phone'),
-            role=request.POST.get('role'),
+            role=role_value,
             department=request.POST.get('department', ''),
             academic_year=request.POST.get('academic_year', ''),
             registration_status=request.POST.get('registration_status') or 'confirmed',
         )
-        messages.success(request, 'Member added successfully!')
+
+        # Generate a QR ticket only for roles that require attendance
+        # tracking (Participant, General Attendee, Volunteer).
+        if member.requires_qr:
+            generate_qr_for_member(member)
+            messages.success(request, 'Member added successfully! QR ticket generated.')
+        else:
+            messages.success(request, 'Member added successfully! (No QR ticket needed for this role.)')
+
         return redirect('add_event_member')
     return render(request, 'add-event-member.html', {
         'events': events,
@@ -890,12 +1109,20 @@ def remove_event_wish(request, pk):
 
 
 # ---------- Vendors ----------
-
 @admin_required
 def vendor_list(request):
     vendors = Vendor.objects.all().order_by('-created_at')
+    total_vendors = vendors.count()
+    active_vendors = vendors.filter(contract_status='active').count()
+    pending_vendors = vendors.filter(contract_status='pending').count()
+    assigned_vendors = vendors.filter(event__isnull=False).count()
+
     return render(request, 'vendor-list.html', {
         'vendors': vendors,
+        'total_vendors': total_vendors,
+        'active_vendors': active_vendors,
+        'pending_vendors': pending_vendors,
+        'assigned_vendors': assigned_vendors,
         'unread_notification_count': _unread_notif_count(request),
     })
 
@@ -911,6 +1138,9 @@ def create_vendor(request):
             phone=request.POST.get('phone'),
             service_type=request.POST.get('service_type'),
             contract_status=request.POST.get('contract_status'),
+            contract_document=request.FILES.get('contract_document'),
+            contract_start_date=request.POST.get('contract_start_date') or None,
+            contract_end_date=request.POST.get('contract_end_date') or None,
             event_id=request.POST.get('event') or None,
             notes=request.POST.get('notes'),
         )
@@ -933,6 +1163,10 @@ def edit_vendor(request, pk):
         vendor.phone = request.POST.get('phone')
         vendor.service_type = request.POST.get('service_type')
         vendor.contract_status = request.POST.get('contract_status')
+        if request.FILES.get('contract_document'):
+            vendor.contract_document = request.FILES.get('contract_document')
+        vendor.contract_start_date = request.POST.get('contract_start_date') or None
+        vendor.contract_end_date = request.POST.get('contract_end_date') or None
         vendor.event_id = request.POST.get('event') or None
         vendor.notes = request.POST.get('notes')
         vendor.save()
@@ -1028,6 +1262,7 @@ def create_expense(request):
             description=request.POST.get('description'),
             projected_amount=projected,
             actual_amount=actual,
+            invoice=request.FILES.get('invoice'),
             status=status,
             requested_by=request.user,
             approved_by=request.user if status == 'approved' else None,
@@ -1120,8 +1355,14 @@ def create_venue(request):
             name=request.POST.get('name'),
             location=request.POST.get('location'),
             capacity=request.POST.get('capacity') or 0,
-            amenities=request.POST.get('amenities', ''),
+            venue_type=request.POST.get('venue_type') or 'other',
             status=request.POST.get('status') or 'available',
+            description=request.POST.get('description', ''),
+            has_projector='has_projector' in request.POST,
+            has_ac='has_ac' in request.POST,
+            has_sound_system='has_sound_system' in request.POST,
+            has_wifi='has_wifi' in request.POST,
+            has_stage='has_stage' in request.POST,
         )
         messages.success(request, 'Venue registered successfully!')
         return redirect('venue_list')
@@ -1138,8 +1379,14 @@ def edit_venue(request, pk):
         venue.name = request.POST.get('name')
         venue.location = request.POST.get('location')
         venue.capacity = request.POST.get('capacity') or 0
-        venue.amenities = request.POST.get('amenities', '')
+        venue.venue_type = request.POST.get('venue_type') or 'other'
         venue.status = request.POST.get('status') or 'available'
+        venue.description = request.POST.get('description', '')
+        venue.has_projector = 'has_projector' in request.POST
+        venue.has_ac = 'has_ac' in request.POST
+        venue.has_sound_system = 'has_sound_system' in request.POST
+        venue.has_wifi = 'has_wifi' in request.POST
+        venue.has_stage = 'has_stage' in request.POST
         venue.save()
         messages.success(request, 'Venue updated successfully!')
         return redirect('venue_list')
@@ -1333,5 +1580,247 @@ def delete_sponsor_confirm(request, pk):
         return redirect('sponsor_list')
     return render(request, 'sponsor-delete.html', {
         'sponsor': sponsor,
+        'unread_notification_count': _unread_notif_count(request),
+    })
+
+
+# ---------- Reports & Export ----------
+
+@admin_required
+def reports_home(request):
+    return render(request, 'reports.html', {
+        'unread_notification_count': _unread_notif_count(request),
+    })
+
+
+def _pdf_table_response(filename, title, headers, rows):
+    from reportlab.lib import colors
+    from reportlab.lib.pagesizes import landscape, A4
+    from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+    from reportlab.lib.styles import getSampleStyleSheet
+    from reportlab.lib.units import mm
+
+    response = HttpResponse(content_type='application/pdf')
+    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+
+    doc = SimpleDocTemplate(response, pagesize=landscape(A4),
+                             leftMargin=15*mm, rightMargin=15*mm, topMargin=15*mm, bottomMargin=15*mm)
+    styles = getSampleStyleSheet()
+    elements = [Paragraph(title, styles['Title']), Spacer(1, 10)]
+
+    data = [headers] + rows
+    table = Table(data, repeatRows=1)
+    table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#4f46e5')),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+        ('FONTSIZE', (0, 0), (-1, -1), 7),
+        ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#dcdfe6')),
+        ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#f7f7fd')]),
+        ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+    ]))
+    elements.append(table)
+    doc.build(elements)
+    return response
+
+
+def _xlsx_response(filename, sheet_title, headers, rows):
+    from openpyxl import Workbook
+    from openpyxl.styles import Font, PatternFill
+
+    wb = Workbook()
+    ws = wb.active
+    ws.title = sheet_title
+
+    ws.append(headers)
+    header_fill = PatternFill(start_color='4F46E5', end_color='4F46E5', fill_type='solid')
+    for cell in ws[1]:
+        cell.font = Font(bold=True, color='FFFFFF')
+        cell.fill = header_fill
+
+    for row in rows:
+        ws.append(row)
+
+    for col in ws.columns:
+        max_length = max((len(str(c.value)) for c in col if c.value is not None), default=10)
+        ws.column_dimensions[col[0].column_letter].width = min(max_length + 2, 40)
+
+    response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+    wb.save(response)
+    return response
+
+
+def _events_rows():
+    headers = ['ID', 'Name', 'Category', 'Status', 'Start Date', 'End Date', 'Venue', 'Max Attendees', 'Registered', 'Budget']
+    rows = []
+    for ev in Event.objects.select_related('category').all():
+        rows.append([
+            ev.id, ev.name, ev.category.name, ev.status,
+            str(ev.start_date), str(ev.end_date), ev.venue,
+            ev.max_attendees, ev.members.count(), str(ev.budget),
+        ])
+    return headers, rows
+
+
+def _members_rows():
+    headers = ['ID', 'Name', 'Email', 'Phone', 'Event', 'Role', 'Department', 'Academic Year', 'Registration Status', 'Joined At']
+    rows = []
+    for m in EventMember.objects.select_related('event').all():
+        rows.append([
+            m.id, m.name, m.email, m.phone, m.event.name,
+            m.get_role_display(), m.department, m.academic_year,
+            m.get_registration_status_display(), str(m.joined_at),
+        ])
+    return headers, rows
+
+
+def _contacts_rows():
+    headers = ['ID', 'Name', 'Email', 'Subject', 'Message', 'Reviewed', 'Submitted At']
+    rows = []
+    for c in ContactMessage.objects.all():
+        rows.append([
+            c.id, c.name, c.email, c.subject, c.message,
+            'Yes' if c.is_reviewed else 'No', str(c.submitted_at),
+        ])
+    return headers, rows
+
+
+@admin_required
+def export_events_csv(request):
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = 'attachment; filename="events_report.csv"'
+    writer = csv.writer(response)
+    headers, rows = _events_rows()
+    writer.writerow(headers)
+    writer.writerows(rows)
+    return response
+
+
+@admin_required
+def export_events_xlsx(request):
+    headers, rows = _events_rows()
+    return _xlsx_response('events_report.xlsx', 'Events', headers, rows)
+
+
+@admin_required
+def export_events_pdf(request):
+    headers, rows = _events_rows()
+    return _pdf_table_response('events_report.pdf', 'Event Report', headers, rows)
+
+
+@admin_required
+def export_members_csv(request):
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = 'attachment; filename="members_report.csv"'
+    writer = csv.writer(response)
+    headers, rows = _members_rows()
+    writer.writerow(headers)
+    writer.writerows(rows)
+    return response
+
+
+@admin_required
+def export_members_xlsx(request):
+    headers, rows = _members_rows()
+    return _xlsx_response('members_report.xlsx', 'Members', headers, rows)
+
+
+@admin_required
+def export_members_pdf(request):
+    headers, rows = _members_rows()
+    return _pdf_table_response('members_report.pdf', 'Member Report', headers, rows)
+
+
+@admin_required
+def export_contacts_csv(request):
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = 'attachment; filename="contact_messages_report.csv"'
+    writer = csv.writer(response)
+    headers, rows = _contacts_rows()
+    writer.writerow(headers)
+    writer.writerows(rows)
+    return response
+
+
+@admin_required
+def export_contacts_xlsx(request):
+    headers, rows = _contacts_rows()
+    return _xlsx_response('contact_messages_report.xlsx', 'Contacts', headers, rows)
+
+
+@admin_required
+def export_contacts_pdf(request):
+    headers, rows = _contacts_rows()
+    return _pdf_table_response('contact_messages_report.pdf', 'Contact Messages Report', headers, rows)
+
+
+# ---------- FAQ Chatbot ----------
+
+FAQ_CONTEXT = """
+You are a helpful FAQ assistant for EventSphere, a college event registration platform. 
+Answer ONLY using the information below. If a question is unrelated to this platform, politely say you can only help with EventSphere questions.
+Keep answers short, friendly, and clear (2-4 sentences max).
+
+1. How do I register for an event?
+Go to "Events Schedule" in your sidebar, click on any event to view details, then click "Confirm Registration." You'll be registered instantly and a QR ticket will be generated automatically.
+
+2. Where can I find my QR ticket?
+Go to your Dashboard and scroll to "My Registrations & Tickets" (or click "My Tickets" in the sidebar). Each event you're registered for shows a QR code you can screenshot or show at entry.
+
+3. Can I register for an event that already started?
+No — if an event's registration deadline has passed, or if it's already marked Completed, registration will be blocked.
+
+4. What happens if an event is full?
+If the event has reached its maximum attendee capacity, you won't be able to register and will see a message saying the event is full.
+
+5. How do I cancel my registration?
+Currently cancellation is available through the participant dashboard registration cancel option, if enabled by the admin for that event.
+
+6. Do I need to bring my QR code physically or digitally?
+Either works — you can show it on your phone screen or print it out. The organizer will scan it at entry.
+
+7. What if my QR code isn't scanning?
+The organizer can manually type in your ticket code (shown as MEMBER-XX) instead of scanning.
+
+8. Can I register for multiple events?
+Yes, you can register for as many events as you'd like, as long as each one is still open for registration and has available capacity.
+
+9. How do I update my profile information?
+Go to "My Profile" in the sidebar. You can update your profile photo and email address there.
+
+10. Who do I contact if I have an issue?
+Use the "Contact" page in the sidebar to send a message directly to the event administrators.
+"""
+
+
+@login_required(login_url='/login/')
+def chatbot_faq(request):
+    if request.method == 'POST':
+        user_question = request.POST.get('question', '').strip()
+
+        if not user_question:
+            return JsonResponse({'answer': "Please type a question."})
+
+        if not settings.GROQ_API_KEY:
+            return JsonResponse({'answer': "Chatbot is not configured yet. Please contact the admin."})
+
+        try:
+            client = Groq(api_key=settings.GROQ_API_KEY)
+            completion = client.chat.completions.create(
+                model="openai/gpt-oss-20b",
+                messages=[
+                    {"role": "system", "content": FAQ_CONTEXT},
+                    {"role": "user", "content": user_question},
+                ],
+                max_tokens=200,
+                temperature=0.4,
+            )
+            answer = completion.choices[0].message.content
+        except Exception:
+            answer = "Sorry, I couldn't process that right now. Please try again shortly."
+
+        return JsonResponse({'answer': answer})
+
+    return render(request, 'chatbot-faq.html', {
         'unread_notification_count': _unread_notif_count(request),
     })

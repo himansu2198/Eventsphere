@@ -5,12 +5,19 @@
   <meta charset="UTF-8">
   <title>Record Sponsorship</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link rel="stylesheet" href="{% static 'css/style.css' %}">
+  <link rel="stylesheet" href="{% static 'css/style.css' %}?v=8">
 </head>
 <body>
   <div class="center-form-wrapper">
     <div class="center-form-card">
       <h2>Record Sponsorship Revenue</h2>
+
+      {% if messages %}
+        {% for message in messages %}
+          <div class="alert alert-success">{{ message }}</div>
+        {% endfor %}
+      {% endif %}
+
       <form method="post">
         {% csrf_token %}
         <div class="mb-3">
@@ -23,8 +30,17 @@
           </select>
         </div>
         <div class="mb-3">
-          <label class="form-label fw-bold">Sponsor Name*</label>
-          <input type="text" name="sponsor_name" class="form-control" required>
+          <label class="form-label fw-bold">Registered Sponsor</label>
+          <select name="sponsor_ref" class="form-select" id="sponsorRefSelect">
+            <option value="">-- Enter name manually below --</option>
+            {% for s in sponsors %}
+              <option value="{{ s.id }}">{{ s.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="mb-3">
+          <label class="form-label fw-bold">Sponsor Name (manual)</label>
+          <input type="text" name="sponsor_name" id="sponsorNameInput" class="form-control" placeholder="Only needed if not selected above">
         </div>
         <div class="mb-3">
           <label class="form-label fw-bold">Amount (₹)*</label>
@@ -42,5 +58,20 @@
       </form>
     </div>
   </div>
+
+  <script>
+    const sponsorRefSelect = document.getElementById('sponsorRefSelect');
+    const sponsorNameInput = document.getElementById('sponsorNameInput');
+
+    sponsorRefSelect.addEventListener('change', function () {
+      if (this.value) {
+        sponsorNameInput.value = this.options[this.selectedIndex].text;
+        sponsorNameInput.disabled = true;
+      } else {
+        sponsorNameInput.value = '';
+        sponsorNameInput.disabled = false;
+      }
+    });
+  </script>
 </body>
 </html>

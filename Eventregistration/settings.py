@@ -3,6 +3,7 @@ Django settings for Eventregistration project.
 """
 
 from pathlib import Path
+from decouple import config
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -120,3 +121,8 @@ REST_FRAMEWORK = {
         'rest_framework.permissions.IsAuthenticated',
     ],
 }
+
+
+# Groq API (FAQ Chatbot)
+
+GROQ_API_KEY = config('GROQ_API_KEY', default='')

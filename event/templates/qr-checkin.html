@@ -1,26 +1,220 @@
+{% extends 'admin_base.html' %}
 {% load static %}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>QR Check-In</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link rel="stylesheet" href="{% static 'css/style.css' %}">
-</head>
-<body>
-  <div class="center-form-wrapper">
-    <div class="center-form-card">
-      <h2>QR Check-In</h2>
-      {% if result %}<div class="alert alert-info">{{ result }}</div>{% endif %}
-      <form method="post">
-        {% csrf_token %}
-        <div class="mb-3">
-          <label class="form-label fw-bold">Scan or Enter Code</label>
-          <input type="text" name="code" class="form-control" placeholder="MEMBER-1" autofocus required>
+
+{% block title %}QR Check-in{% endblock %}
+
+{% block content %}
+  <div class="content-card">
+    <div class="page-header-row">
+      <div>
+        <h2>QR Ticket Check-in</h2>
+        <p class="page-subtitle">Verify attendee entry or exit using their QR ticket code.</p>
+      </div>
+    </div>
+
+    {% if result %}
+      <div class="alert alert-success">{{ result }}</div>
+    {% endif %}
+
+    {% if checked_in_member %}
+    <div class="grid-card mb-3" style="border-left:4px solid #23a35a;">
+      <div class="card-top-row">
+        <span class="category-pill"><i class="bi bi-check-circle-fill me-1"></i>Verified</span>
+      </div>
+      <h4>{{ checked_in_member.name }}</h4>
+      <div class="card-info-box">
+        <div class="row g-2">
+          <div class="col-6"><div class="info-label">Email</div><div class="info-value" style="font-size:0.82rem;">{{ checked_in_member.email }}</div></div>
+          <div class="col-6"><div class="info-label">Phone</div><div class="info-value">{{ checked_in_member.phone|default:"-" }}</div></div>
+          <div class="col-6"><div class="info-label">Role</div><div class="info-value text-capitalize">{{ checked_in_member.get_role_display }}</div></div>
+          <div class="col-6"><div class="info-label">Department</div><div class="info-value">{{ checked_in_member.department|default:"-" }}</div></div>
+          <div class="col-6"><div class="info-label">Event</div><div class="info-value">{{ checked_in_member.event.name }}</div></div>
+          <div class="col-6"><div class="info-label">Registration Status</div><div class="info-value text-capitalize">{{ checked_in_member.get_registration_status_display }}</div></div>
         </div>
-        <button type="submit" class="btn btn-success">Check In</button>
-      </form>
+      </div>
+    </div>
+    {% endif %}
+
+    <div class="row g-3">
+      <div class="col-lg-5">
+        <div class="grid-card h-100">
+          <h4 class="mb-3"><i class="bi bi-qr-code-scan me-2"></i>Verify Attendee</h4>
+
+          <form method="post" id="checkinForm">
+            {% csrf_token %}
+
+            <label class="form-label fw-bold">Mode</label>
+            <div class="view-toggle-group mb-3" style="width:100%;">
+              <button type="button" id="entryModeBtn" class="active" style="flex:1;"><i class="bi bi-box-arrow-in-right me-1"></i>Entry</button>
+              <button type="button" id="exitModeBtn" style="flex:1;"><i class="bi bi-box-arrow-right me-1"></i>Exit</button>
+            </div>
+            <input type="hidden" name="mode" id="modeInput" value="entry">
+
+            <div class="mb-3">
+              <label class="form-label fw-bold">Ticket Code</label>
+              <input type="text" name="code" id="manualCode" class="form-control" placeholder="MEMBER-123" autocomplete="off" autofocus>
+              <div class="text-muted" style="font-size:0.78rem; margin-top:4px;">Type the code from the participant's ticket, or use the camera scanner below.</div>
+            </div>
+
+            <button type="submit" class="btn btn-primary w-100 mb-3" id="checkinSubmitBtn">Check In</button>
+          </form>
+
+          <hr>
+
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <span class="fw-bold" style="font-size:0.88rem;"><i class="bi bi-camera-fill me-1"></i>Camera Scanner</span>
+            <button type="button" id="toggleCameraBtn" class="btn btn-sm btn-outline-secondary">Enable Camera</button>
+          </div>
+          <div id="qr-reader" style="width:100%; border-radius:10px; overflow:hidden; display:none; background:#1e1b2e;"></div>
+          <div id="qr-reader-status" class="text-muted text-center mt-2" style="font-size:0.8rem;"></div>
+        </div>
+      </div>
+
+      <div class="col-lg-3">
+        <div class="grid-card h-100">
+          <h4 class="mb-3"><i class="bi bi-funnel-fill me-2"></i>Filter by Event</h4>
+          <div class="d-flex flex-column gap-2">
+            {% if not selected_event_id %}
+              <a href="{% url 'qr_checkin' %}" class="btn-dark-pill justify-content-between">All Events</a>
+            {% else %}
+              <a href="{% url 'qr_checkin' %}" class="btn-dark-pill justify-content-between" style="background:#fff; color:#1e2430; border:1px solid #e0e4eb;">All Events</a>
+            {% endif %}
+
+            {% for ev in events_with_counts %}
+              {% if selected_event_id == ev.id %}
+                <a href="?event={{ ev.id }}" class="btn-dark-pill justify-content-between">
+                  <span>{{ ev.name }}</span>
+                  <span class="badge" style="background:rgba(255,255,255,0.25); color:#fff;">{{ ev.verified_count }}</span>
+                </a>
+              {% else %}
+                <a href="?event={{ ev.id }}" class="btn-dark-pill justify-content-between" style="background:#fff; color:#1e2430; border:1px solid #e0e4eb;">
+                  <span>{{ ev.name }}</span>
+                  <span class="badge" style="background:#eef0ff; color:#4f46e5;">{{ ev.verified_count }}</span>
+                </a>
+              {% endif %}
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+
+      <div class="col-lg-4">
+        <div class="grid-card h-100">
+          <h4 class="mb-3"><i class="bi bi-clock-history me-2"></i>Verified Attendees{% if selected_event_id %} — Filtered{% endif %}</h4>
+          {% if recent_checkins %}
+            <div class="table-responsive">
+              <table class="table align-middle">
+                <thead>
+                  <tr><th>Name</th><th>Role</th><th>Status</th><th>Time</th></tr>
+                </thead>
+                <tbody>
+                  {% for c in recent_checkins %}
+                  <tr>
+                    <td>
+                      {{ c.member.name }}
+                      <div class="text-muted" style="font-size:0.72rem;">{{ c.member.event.name }}</div>
+                    </td>
+                    <td><span class="status-badge-pill status-upcoming text-capitalize">{{ c.member.get_role_display }}</span></td>
+                    <td>
+                      {% if c.checked_out_at %}
+                        <span class="status-badge-pill status-completed">Left</span>
+                      {% else %}
+                        <span class="status-badge-pill status-active">In Venue</span>
+                      {% endif %}
+                    </td>
+                    <td>{{ c.marked_at|date:"h:i A" }}</td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          {% else %}
+            <div class="empty-state">
+              <i class="bi bi-clipboard-check"></i>
+              <p class="mb-0">No check-ins recorded yet.</p>
+            </div>
+          {% endif %}
+        </div>
+      </div>
     </div>
   </div>
-</body>
-</html>
+{% endblock %}
+
+{% block extra_scripts %}
+  <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+  <script>
+    const entryBtn = document.getElementById('entryModeBtn');
+    const exitBtn = document.getElementById('exitModeBtn');
+    const modeInput = document.getElementById('modeInput');
+    const submitBtn = document.getElementById('checkinSubmitBtn');
+
+    entryBtn.addEventListener('click', () => {
+      entryBtn.classList.add('active');
+      exitBtn.classList.remove('active');
+      modeInput.value = 'entry';
+      submitBtn.textContent = 'Check In';
+    });
+    exitBtn.addEventListener('click', () => {
+      exitBtn.classList.add('active');
+      entryBtn.classList.remove('active');
+      modeInput.value = 'exit';
+      submitBtn.textContent = 'Check Out';
+    });
+
+    const toggleCameraBtn = document.getElementById('toggleCameraBtn');
+    const qrReaderDiv = document.getElementById('qr-reader');
+    const statusEl = document.getElementById('qr-reader-status');
+    const manualForm = document.getElementById('checkinForm');
+    const manualCodeInput = document.getElementById('manualCode');
+
+    let html5QrCode = null;
+    let cameraActive = false;
+
+    function submitScannedCode(decodedText) {
+      manualCodeInput.value = decodedText;
+      manualForm.submit();
+    }
+
+    toggleCameraBtn.addEventListener('click', () => {
+      if (!cameraActive) {
+        qrReaderDiv.style.display = 'block';
+        toggleCameraBtn.textContent = 'Disable Camera';
+        statusEl.textContent = 'Starting camera…';
+
+        html5QrCode = new Html5Qrcode("qr-reader");
+        Html5Qrcode.getCameras().then(devices => {
+          if (devices && devices.length) {
+            html5QrCode.start(
+              devices[0].id,
+              { fps: 10, qrbox: { width: 220, height: 220 } },
+              (decodedText) => {
+                html5QrCode.stop().then(() => {
+                  statusEl.textContent = 'Code scanned — submitting…';
+                  submitScannedCode(decodedText);
+                });
+              },
+              () => {}
+            ).then(() => {
+              statusEl.textContent = 'Point the camera at a QR ticket.';
+            }).catch(() => {
+              statusEl.textContent = 'Could not start camera.';
+            });
+          } else {
+            statusEl.textContent = 'No camera found on this device.';
+          }
+        }).catch(() => {
+          statusEl.textContent = 'Camera access denied.';
+        });
+
+        cameraActive = true;
+      } else {
+        if (html5QrCode) {
+          html5QrCode.stop().catch(() => {});
+        }
+        qrReaderDiv.style.display = 'none';
+        toggleCameraBtn.textContent = 'Enable Camera';
+        statusEl.textContent = '';
+        cameraActive = false;
+      }
+    });
+  </script>
+{% endblock %}

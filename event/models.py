@@ -41,11 +41,28 @@ class Venue(models.Model):
         ('maintenance', 'Under Maintenance'),
     ]
 
+    TYPE_CHOICES = [
+        ('auditorium', 'Auditorium'),
+        ('classroom', 'Classroom'),
+        ('lab', 'Lab'),
+        ('ground', 'Ground/Field'),
+        ('hall', 'Seminar Hall'),
+        ('other', 'Other'),
+    ]
+
     name = models.CharField(max_length=150)
     location = models.CharField(max_length=255, blank=True)
     capacity = models.IntegerField(default=0)
-    amenities = models.TextField(blank=True, help_text="Comma-separated, e.g. Projector, AC, Sound System")
+    venue_type = models.CharField(max_length=20, choices=TYPE_CHOICES, default='other')
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='available')
+    description = models.TextField(blank=True)
+
+    has_projector = models.BooleanField(default=False)
+    has_ac = models.BooleanField(default=False)
+    has_sound_system = models.BooleanField(default=False)
+    has_wifi = models.BooleanField(default=False)
+    has_stage = models.BooleanField(default=False)
+
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -53,6 +70,20 @@ class Venue(models.Model):
 
     def __str__(self):
         return self.name
+
+    @property
+    def facility_list(self):
+        items = []
+        if self.has_projector: items.append('Projector')
+        if self.has_ac: items.append('AC')
+        if self.has_sound_system: items.append('Sound System')
+        if self.has_wifi: items.append('Wi-Fi')
+        if self.has_stage: items.append('Stage')
+        return items
+
+    @property
+    def upcoming_booking(self):
+        return self.events_booked.filter(status__in=['active', 'upcoming']).order_by('start_date').first()
 
 
 class Event(models.Model):
@@ -151,12 +182,18 @@ class EventMember(models.Model):
         ('judge', 'Judge'),
     ]
 
+    # Roles that require attendance tracking and therefore need a QR ticket.
+    ATTENDANCE_ROLES = ['participant', 'general', 'volunteer']
+
     REGISTRATION_STATUS_CHOICES = [
         ('pending', 'Pending'),
         ('confirmed', 'Confirmed'),
         ('waitlisted', 'Waitlisted'),
         ('cancelled', 'Cancelled'),
     ]
+
+    # Statuses allowed to physically check in at the event.
+    ELIGIBLE_CHECKIN_STATUSES = ['confirmed']
 
     event = models.ForeignKey(Event, on_delete=models.CASCADE, related_name='members')
     user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='registrations')
@@ -173,6 +210,14 @@ class EventMember(models.Model):
     def __str__(self):
         return f"{self.name} - {self.event.name}"
 
+    @property
+    def requires_qr(self):
+        return self.role in self.ATTENDANCE_ROLES
+
+    @property
+    def is_eligible_for_checkin(self):
+        return self.registration_status in self.ELIGIBLE_CHECKIN_STATUSES
+
 
 class UserMark(models.Model):
     STATUS_CHOICES = [
@@ -183,6 +228,7 @@ class UserMark(models.Model):
     member = models.ForeignKey(EventMember, on_delete=models.CASCADE, related_name='marks')
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='present')
     marked_at = models.DateTimeField(auto_now_add=True)
+    checked_out_at = models.DateTimeField(null=True, blank=True)
 
     def __str__(self):
         return f"{self.member.name} - {self.status}"
@@ -211,6 +257,9 @@ class Vendor(models.Model):
     phone = models.CharField(max_length=20, blank=True)
     service_type = models.CharField(max_length=20, choices=SERVICE_CHOICES, default='other')
     contract_status = models.CharField(max_length=20, choices=CONTRACT_STATUS_CHOICES, default='pending')
+    contract_document = models.FileField(upload_to='vendor_contracts/', blank=True, null=True, help_text="Upload signed contract/agreement (PDF, DOC, etc.)")
+    contract_start_date = models.DateField(null=True, blank=True)
+    contract_end_date = models.DateField(null=True, blank=True)
     event = models.ForeignKey(Event, on_delete=models.SET_NULL, null=True, blank=True, related_name='vendors')
     notes = models.TextField(blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -257,6 +306,7 @@ class Expense(models.Model):
     description = models.CharField(max_length=255, blank=True)
     projected_amount = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     actual_amount = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    invoice = models.FileField(upload_to='expense_invoices/', blank=True, null=True, help_text="Upload invoice/receipt (PDF, image, etc.)")
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
     requested_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='requested_expenses')
     approved_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='approved_expenses')

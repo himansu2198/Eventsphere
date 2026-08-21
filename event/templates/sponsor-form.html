@@ -1,64 +1,56 @@
+{% extends 'admin_base.html' %}
 {% load static %}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>{% if sponsor %}Edit{% else %}Register{% endif %} Sponsor</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
-  <link rel="stylesheet" href="{% static 'css/style.css' %}?v=8">
-</head>
-<body>
-  <div class="center-form-wrapper">
-    <div class="center-form-card">
-      <h2>{% if sponsor %}Edit Sponsor{% else %}Register Sponsor{% endif %}</h2>
 
-      {% if messages %}
-        {% for message in messages %}
-          <div class="alert alert-success">{{ message }}</div>
-        {% endfor %}
-      {% endif %}
+{% block title %}{% if sponsor %}Edit{% else %}Register{% endif %} Sponsor{% endblock %}
 
-      {% if sponsor.logo %}
-        <div class="text-center mb-3">
-          <img src="{{ sponsor.logo.url }}" style="width:80px; height:80px; object-fit:contain; border-radius:8px; background:#f7f7fd; padding:8px;">
-        </div>
-      {% endif %}
+{% block content %}
+  <div class="content-card" style="max-width:600px; margin:0 auto;">
+    <h2>{% if sponsor %}Edit Sponsor{% else %}Register Sponsor{% endif %}</h2>
 
-      <form method="post" enctype="multipart/form-data">
-        {% csrf_token %}
-        <div class="mb-3">
-          <label class="form-label fw-bold">Sponsor Name*</label>
-          <input type="text" name="name" class="form-control" value="{{ sponsor.name|default:'' }}" required>
-        </div>
-        <div class="mb-3">
-          <label class="form-label fw-bold">Logo</label>
-          <input type="file" name="logo" class="form-control" accept="image/*">
-        </div>
-        <div class="mb-3">
-          <label class="form-label fw-bold">Contact Person</label>
-          <input type="text" name="contact_person" class="form-control" value="{{ sponsor.contact_person|default:'' }}">
-        </div>
-        <div class="mb-3">
-          <label class="form-label fw-bold">Email</label>
-          <input type="email" name="email" class="form-control" value="{{ sponsor.email|default:'' }}">
-        </div>
-        <div class="mb-3">
-          <label class="form-label fw-bold">Phone</label>
-          <input type="tel" name="phone" class="form-control" value="{{ sponsor.phone|default:'' }}">
-        </div>
-        <div class="mb-3">
-          <label class="form-label fw-bold">Website</label>
-          <input type="url" name="website" class="form-control" value="{{ sponsor.website|default:'' }}" placeholder="https://example.com">
-        </div>
-        <div class="mb-3">
-          <label class="form-label fw-bold">Notes</label>
-          <textarea name="notes" class="form-control" rows="3">{{ sponsor.notes|default:'' }}</textarea>
-        </div>
-        <button type="submit" class="btn btn-primary">{% if sponsor %}Update{% else %}Save{% endif %} Sponsor</button>
-        <a href="{% url 'sponsor_list' %}" class="btn btn-secondary">Cancel</a>
-      </form>
-    </div>
+    {% if messages %}
+      {% for message in messages %}
+        <div class="alert alert-success">{{ message }}</div>
+      {% endfor %}
+    {% endif %}
+
+    {% if sponsor.logo %}
+      <div class="text-center mb-3">
+        <img src="{{ sponsor.logo.url }}" style="width:80px; height:80px; object-fit:contain; border-radius:8px; background:#f7f7fd; padding:8px;">
+      </div>
+    {% endif %}
+
+    <form method="post" enctype="multipart/form-data">
+      {% csrf_token %}
+      <div class="mb-3">
+        <label class="form-label fw-bold">Sponsor Name*</label>
+        <input type="text" name="name" class="form-control" value="{{ sponsor.name|default:'' }}" required>
+      </div>
+      <div class="mb-3">
+        <label class="form-label fw-bold">Logo</label>
+        <input type="file" name="logo" class="form-control" accept="image/*">
+      </div>
+      <div class="mb-3">
+        <label class="form-label fw-bold">Contact Person</label>
+        <input type="text" name="contact_person" class="form-control" value="{{ sponsor.contact_person|default:'' }}">
+      </div>
+      <div class="mb-3">
+        <label class="form-label fw-bold">Email</label>
+        <input type="email" name="email" class="form-control" value="{{ sponsor.email|default:'' }}">
+      </div>
+      <div class="mb-3">
+        <label class="form-label fw-bold">Phone</label>
+        <input type="tel" name="phone" class="form-control" value="{{ sponsor.phone|default:'' }}">
+      </div>
+      <div class="mb-3">
+        <label class="form-label fw-bold">Website</label>
+        <input type="url" name="website" class="form-control" value="{{ sponsor.website|default:'' }}" placeholder="https://example.com">
+      </div>
+      <div class="mb-3">
+        <label class="form-label fw-bold">Notes</label>
+        <textarea name="notes" class="form-control" rows="3">{{ sponsor.notes|default:'' }}</textarea>
+      </div>
+      <button type="submit" class="btn btn-primary">{% if sponsor %}Update{% else %}Save{% endif %} Sponsor</button>
+      <a href="{% url 'sponsor_list' %}" class="btn btn-secondary">Cancel</a>
+    </form>
   </div>
-</body>
-</html>
+{% endblock %}

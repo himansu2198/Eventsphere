@@ -5,7 +5,7 @@
   <meta charset="UTF-8">
   <title>Record Expense</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link rel="stylesheet" href="{% static 'css/style.css' %}">
+  <link rel="stylesheet" href="{% static 'css/style.css' %}?v=8">
 </head>
 <body>
   <div class="center-form-wrapper">
@@ -19,7 +19,7 @@
         {% endfor %}
       {% endif %}
 
-      <form method="post">
+      <form method="post" enctype="multipart/form-data">
         {% csrf_token %}
         <div class="mb-3">
           <label class="form-label fw-bold">Event*</label>
@@ -53,6 +53,11 @@
         <div class="mb-3">
           <label class="form-label fw-bold">Actual Amount (₹)</label>
           <input type="number" step="0.01" name="actual_amount" class="form-control" value="0">
+        </div>
+        <div class="mb-3">
+          <label class="form-label fw-bold">Invoice / Receipt</label>
+          <input type="file" name="invoice" class="form-control" accept=".pdf,image/*">
+          <div class="text-muted" style="font-size:0.78rem; margin-top:4px;">Optional — upload a PDF or image of the invoice.</div>
         </div>
         <button type="submit" class="btn btn-success">Record Expense</button>
         <a href="{% url 'budget_overview' %}" class="btn btn-secondary">Cancel</a>
