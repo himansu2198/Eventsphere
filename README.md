@@ -1,4 +1,4 @@
-# EventSphere — Event Registration & Management Platform
+# EventSphere — Smart Event Planning Platform with Resource Coordination System
 
 A full-featured Django-based event management system built for college/campus events, developed as part of the Infosys Springboard Training Program. Supports two roles — Admin and Participant — with digital ticketing, QR-based check-in, venue conflict detection, budget tracking, and more.
 
