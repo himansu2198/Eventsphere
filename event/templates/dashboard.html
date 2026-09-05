@@ -9,7 +9,7 @@
     <div class="d-flex justify-content-between align-items-center mb-4">
       <div>
         <h2 class="mb-1">Hello {{ user.username }}</h2>
-        <p class="text-muted mb-0">Monitor event performance, registrations, and platform activity.</p>
+        <p class="text-muted mb-0">Monitor event performance, registrations and platform activity.</p>
       </div>
       <a href="{% url 'create_event' %}" class="btn-dark-pill"><i class="bi bi-plus-lg"></i>New Event</a>
     </div>
@@ -147,7 +147,11 @@
     {% if recent_activities %}
       <div class="d-flex flex-column gap-2">
         {% for act in recent_activities %}
+        {% if act.link %}
+        <a href="{{ act.link }}" class="d-flex align-items-center gap-3 p-2" style="border-bottom:1px solid #eef0f4; text-decoration:none; color:inherit;">
+        {% else %}
         <div class="d-flex align-items-center gap-3 p-2" style="border-bottom:1px solid #eef0f4;">
+        {% endif %}
           <div style="width:34px; height:34px; border-radius:50%; background:#eef0ff; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
             <i class="bi {{ act.icon }}" style="color:#4f46e5; font-size:0.9rem;"></i>
           </div>
@@ -155,7 +159,7 @@
             <div style="font-size:0.88rem; color:#1e1b2e;">{{ act.text }}</div>
             <div style="font-size:0.75rem; color:#6c757d;">{{ act.timestamp|timesince }} ago</div>
           </div>
-        </div>
+        {% if act.link %}</a>{% else %}</div>{% endif %}
         {% endfor %}
       </div>
     {% else %}
@@ -167,8 +171,8 @@
   </div>
 
   <footer class="admin-footer">
-    <div>© 2026 Event Registration Platform · Built as part of the Infosys Springboard Training Program</div>
-    <div>Event Registration Platform | Admin Panel</div>
+    <div>© 2026 Smart Event Planning Platform with Resource Coordination System · Built as part of the Infosys Springboard Training Program</div>
+    <div>SEP-RCS | Admin Panel</div>
   </footer>
 
 {% endblock %}

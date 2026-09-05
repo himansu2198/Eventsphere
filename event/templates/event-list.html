@@ -3,6 +3,7 @@
 
 {% block title %}Event List{% endblock %}
 
+
 {% block content %}
   <div class="content-card">
     {% if messages %}
@@ -34,7 +35,6 @@
       <span class="filter-pill" data-filter="completed">Completed</span>
     </div>
 
-    <!-- Grid view -->
     <div id="gridView" class="card-grid">
       {% for ev in events %}
       <div class="grid-card" data-status="{{ ev.status }}">
@@ -86,7 +86,6 @@
       {% endfor %}
     </div>
 
-    <!-- Table view (hidden by default) -->
     <div class="data-table-toolbar d-none" id="tableToolbar">
       <input type="text" id="eventTableSearch" class="form-control table-search-input" placeholder="Search events...">
     </div>

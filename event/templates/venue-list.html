@@ -3,11 +3,7 @@
 
 {% block title %}Venues{% endblock %}
 
-{% block topbar_extra %}
-<div class="search-box"><input type="text" id="venueSearchInput" class="form-control" placeholder="Search venues by name or location..."></div>
-<a href="{% url 'profile' %}">Profile</a>
-<form method="post" action="{% url 'logout' %}">{% csrf_token %}<button type="submit" class="text-danger">Logout</button></form>
-{% endblock %}
+
 
 {% block content %}
   <div class="content-card">
@@ -221,3 +217,4 @@
     });
   </script>
 {% endblock %}
+

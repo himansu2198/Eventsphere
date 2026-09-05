@@ -14,6 +14,9 @@ urlpatterns = [
 
     path('', views.landing_page, name='landing'),
     path('dashboard/', views.dashboard, name='dashboard'),
+    path('admin-search/', views.global_admin_search, name='global_admin_search'),
+    path('api/global-search/', views.global_search_api, name='global_search_api'),
+    path('api/participant-search/', views.participant_search_api, name='participant_search_api'),
     path('participant-dashboard/', views.participant_dashboard, name='participant_dashboard'),
     path('faq-chat/', views.chatbot_faq, name='chatbot_faq'),
     path('register-event/<int:event_id>/', views.participant_register_event, name='participant_register_event'),
@@ -26,6 +29,7 @@ urlpatterns = [
     path('notifications/read/<int:pk>/', views.mark_notification_read, name='mark_notification_read'),
     path('notifications/read-all/', views.mark_all_notifications_read, name='mark_all_notifications_read'),
     path('api/notifications/unread-count/', views.notification_unread_count_api, name='notification_unread_count_api'),
+    path('api/notifications/recent/', views.notification_recent_api, name='notification_recent_api'),
     path('messages/', views.messages_view, name='chat_messages'),
     path('apps/', views.apps_menu_view, name='apps_menu'),
     path('change-password/', views.change_password_view, name='change_password'),
@@ -44,6 +48,7 @@ urlpatterns = [
     path('event-status/<int:pk>/', views.update_event_status, name='update_event_status'),
     path('events-schedule/', views.participant_event_list, name='participant_event_list'),
     path('events-schedule/<int:pk>/', views.participant_event_detail, name='participant_event_detail'),
+    path('api/participant-events-calendar/', views.participant_events_calendar_api, name='participant_events_calendar_api'),
 
     path('add-event-member/', views.add_event_member, name='add_event_member'),
     path('remove-event-member/<int:pk>/', views.remove_event_member, name='remove_event_member'),
@@ -76,12 +81,16 @@ urlpatterns = [
 
     path('contact/', views.contact, name='contact'),
     path('contact-messages/', views.contact_message_list, name='contact_message_list'),
+    path('contact-messages/<int:pk>/', views.contact_message_detail, name='contact_message_detail'),
     path('contact-messages/mark-reviewed/<int:pk>/', views.mark_contact_reviewed, name='mark_contact_reviewed'),
+    path('my-inquiries/', views.participant_inquiry_list, name='participant_inquiry_list'),
+    path('my-inquiries/<int:pk>/', views.participant_inquiry_detail, name='participant_inquiry_detail'),
 
     path('venues/', views.venue_list, name='venue_list'),
     path('venues/create/', views.create_venue, name='create_venue'),
     path('venues/edit/<int:pk>/', views.edit_venue, name='edit_venue'),
     path('venues/delete/<int:pk>/', views.delete_venue_confirm, name='delete_venue'),
+
 
     path('resources/', views.resource_list, name='resource_list'),
     path('resources/create/', views.create_resource, name='create_resource'),

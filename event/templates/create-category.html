@@ -1,52 +1,89 @@
 {% extends 'admin_base.html' %}
 {% load static %}
 
-{% block title %}Create Event Category{% endblock %}
+{% block title %}Create Category{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css">
+{% endblock %}
 
 {% block content %}
-  <div class="content-card">
+  <div class="content-card" style="max-width:700px; margin:0 auto;">
+    <h2>Create Category</h2>
+
     {% if messages %}
       {% for message in messages %}
-        <div class="alert {% if message.tags == 'error' %}alert-danger{% else %}alert-success{% endif %}">{{ message }}</div>
+        <div class="alert alert-danger">{{ message }}</div>
       {% endfor %}
     {% endif %}
 
-    <div class="page-header-row">
-      <div>
-        <h2>Create Event Category</h2>
-        <p class="page-subtitle">Add a new category to organize your events.</p>
-      </div>
-      <a href="{% url 'category_list' %}" class="btn-dark-pill"><i class="bi bi-list-ul"></i>Category List</a>
-    </div>
-
     <form method="post" enctype="multipart/form-data">
       {% csrf_token %}
+
       <div class="mb-3">
-        <label class="form-label">Name<span class="required-mark">*</span></label>
+        <label class="form-label">Category Name<span class="required-mark">*</span></label>
         <input type="text" name="name" class="form-control" required>
       </div>
+
       <div class="mb-3">
-        <label class="form-label">Code<span class="required-mark">*</span></label>
+        <label class="form-label">Category Code<span class="required-mark">*</span></label>
         <input type="text" name="code" class="form-control" required>
       </div>
+
       <div class="mb-3">
-        <label class="form-label">Image<span class="required-mark">*</span></label>
-        <input type="file" name="image" class="form-control">
+        <label class="form-label">Category Banner Image</label>
+
+        <div class="image-upload-preview-box" id="newImagePreviewBox" style="display:none;">
+          <img id="categoryImagePreview" alt="Cropped preview">
+        </div>
+
+        <input type="file" id="id_image" name="image" class="form-control" accept="image/*">
+        <div class="text-muted" style="font-size:0.78rem; margin-top:4px;">Select an image — a crop editor will open automatically to fit the banner area cleanly.</div>
       </div>
-      <div class="mb-3">
-        <label class="form-label">Priority<span class="required-mark">*</span></label>
-        <input type="number" name="priority" class="form-control" value="1" required>
+
+      <div class="row g-3">
+        <div class="col-md-6">
+          <div class="mb-3">
+            <label class="form-label">Priority</label>
+            <input type="number" name="priority" class="form-control" value="1" min="1">
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="mb-3">
+            <label class="form-label">Status</label>
+            <select name="status" class="form-select">
+              <option value="active">Active</option>
+              <option value="inactive">Inactive</option>
+              <option value="completed">Completed</option>
+            </select>
+          </div>
+        </div>
       </div>
-      <div class="mb-3">
-        <label class="form-label">Status<span class="required-mark">*</span></label>
-        <select name="status" class="form-select" required>
-          <option value="">----------</option>
-          <option value="active">Active</option>
-          <option value="inactive">Inactive</option>
-          <option value="completed">Completed</option>
-        </select>
-      </div>
+
       <button type="submit" class="btn btn-primary">Save Category</button>
+      <a href="{% url 'category_list' %}" class="btn btn-secondary">Cancel</a>
     </form>
   </div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js"></script>
+<script src="{% static 'js/image-cropper.js' %}"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    ImageCropper.attach({
+      inputId: 'id_image',
+      ratio: 360 / 110,
+      outputWidth: 720,
+      outputHeight: 220,
+      previewId: 'categoryImagePreview',
+    });
+
+    const fileInput = document.getElementById('id_image');
+    const newBox = document.getElementById('newImagePreviewBox');
+    fileInput.addEventListener('change', function () {
+      newBox.style.display = 'block';
+    });
+  });
+</script>
 {% endblock %}

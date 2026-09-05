@@ -1,6 +1,7 @@
 {% load static %}
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <title>{% block title %}Admin Panel{% endblock %}</title>
@@ -9,70 +10,153 @@
   <link rel="stylesheet" href="{% static 'css/style.css' %}?v=8">
   {% block extra_head %}{% endblock %}
 </head>
+
 <body>
   <div class="app-wrapper">
     <nav class="sidebar">
-      <div class="brand">
+      <div class="sidebar_div">
+
+        <div class="brand">
         {% if user.profile.avatar %}
           <img src="{{ user.profile.avatar.url }}" alt="Profile" width="64" height="64" style="width:64px !important; height:64px !important; border-radius:50%; object-fit:cover; display:block; margin:0 auto 10px auto; border:2px solid rgba(255,255,255,0.2);">
         {% else %}
-          <img src="{% static 'img/avatar.jpeg' %}" alt="Profile" width="64" height="64" style="width:64px !important; height:64px !important; border-radius:50%; object-fit:cover; display:block; margin:0 auto 10px auto; border:2px solid rgba(255,255,255,0.2);">
+          <div style="width:64px; height:64px; border-radius:50%; background:rgba(255,255,255,0.15); display:flex; align-items:center; justify-content:center; margin:0 auto 10px auto; border:2px solid rgba(255,255,255,0.2);">
+            <i class="bi bi-person-fill" style="font-size:1.8rem; color:rgba(255,255,255,0.6);"></i>
+          </div>
         {% endif %}
-        <h4>Admin Panel</h4>
-        <p>Welcome, {{ user.username }}!</p>
+          <h4>Admin Panel</h4>
+          <p>Welcome, {{ user.username }}!</p>
+        </div>
+        <ul class="nav flex-column">
+          <li class="nav-item">
+            <a class="nav-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}"
+              href="{% url 'dashboard' %}"><i class="bi bi-grid-fill me-2"></i>Dashboard</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link d-flex justify-content-between align-items-center" data-bs-toggle="collapse"
+              href="#eventCategoryMenu" role="button"
+              aria-expanded="{% if request.resolver_match.url_name in 'create_category,category_list,edit_category,delete_category' %}true{% else %}false{% endif %}">
+              <span><i class="bi bi-folder-fill me-2"></i>Event Category</span><i class="bi bi-chevron-down small"></i>
+            </a>
+            <div
+              class="collapse {% if request.resolver_match.url_name in 'create_category,category_list,edit_category,delete_category' %}show{% endif %}"
+              id="eventCategoryMenu">
+              <ul class="nav flex-column sub-menu">
+                <li class="nav-item"><a
+                    class="nav-link {% if request.resolver_match.url_name == 'create_category' %}active{% endif %}"
+                    href="{% url 'create_category' %}"><i class="bi bi-pencil-square me-2"></i>Create Category</a></li>
+                <li class="nav-item"><a
+                    class="nav-link {% if request.resolver_match.url_name == 'category_list' %}active{% endif %}"
+                    href="{% url 'category_list' %}"><i class="bi bi-list-ul me-2"></i>Category List</a></li>
+              </ul>
+            </div>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link d-flex justify-content-between align-items-center" data-bs-toggle="collapse"
+              href="#eventsMenu" role="button"
+              aria-expanded="{% if request.resolver_match.url_name in 'create_event,event_list,edit_event,delete_event,event_detail,event_history,update_event_status,add_event_member,remove_event_member,joined_events,add_event_wish,event_wish_list,approve_wish,reject_wish,remove_event_wish,update_member_registration_status' %}true{% else %}false{% endif %}">
+              <span><i class="bi bi-calendar-event-fill me-2"></i>Events</span><i class="bi bi-chevron-down small"></i>
+            </a>
+            <div
+              class="collapse {% if request.resolver_match.url_name in 'create_event,event_list,edit_event,delete_event,event_detail,event_history,update_event_status,add_event_member,remove_event_member,joined_events,add_event_wish,event_wish_list,approve_wish,reject_wish,remove_event_wish,update_member_registration_status' %}show{% endif %}"
+              id="eventsMenu">
+              <ul class="nav flex-column sub-menu">
+                <li class="nav-item"><a
+                    class="nav-link {% if request.resolver_match.url_name == 'create_event' %}active{% endif %}"
+                    href="{% url 'create_event' %}"><i class="bi bi-pencil-square me-2"></i>Create Event</a></li>
+                <li class="nav-item"><a
+                    class="nav-link {% if request.resolver_match.url_name == 'event_list' %}active{% endif %}"
+                    href="{% url 'event_list' %}"><i class="bi bi-list-ul me-2"></i>Event List</a></li>
+                <li class="nav-item"><a
+                    class="nav-link {% if request.resolver_match.url_name == 'add_event_member' %}active{% endif %}"
+                    href="{% url 'add_event_member' %}"><i class="bi bi-person-plus-fill me-2"></i>Add Event Member</a>
+                </li>
+                <li class="nav-item"><a
+                    class="nav-link {% if request.resolver_match.url_name == 'joined_events' %}active{% endif %}"
+                    href="{% url 'joined_events' %}"><i class="bi bi-list-ul me-2"></i>Joined Events</a></li>
+                <li class="nav-item"><a
+                    class="nav-link {% if request.resolver_match.url_name == 'add_event_wish' %}active{% endif %}"
+                    href="{% url 'add_event_wish' %}"><i class="bi bi-heart-fill me-2"></i>Add Event Wish User</a></li>
+                <li class="nav-item"><a
+                    class="nav-link {% if request.resolver_match.url_name == 'event_wish_list' %}active{% endif %}"
+                    href="{% url 'event_wish_list' %}"><i class="bi bi-list-ul me-2"></i>Event Wish List</a></li>
+              </ul>
+            </div>
+          </li>
+          <li class="nav-item"><a
+              class="nav-link {% if request.resolver_match.url_name == 'vendor_list' or request.resolver_match.url_name == 'create_vendor' or request.resolver_match.url_name == 'edit_vendor' or request.resolver_match.url_name == 'delete_vendor' %}active{% endif %}"
+              href="{% url 'vendor_list' %}"><i class="bi bi-truck me-2"></i>Vendors</a></li>
+          <li class="nav-item"><a
+              class="nav-link {% if request.resolver_match.url_name == 'venue_list' or request.resolver_match.url_name == 'create_venue' or request.resolver_match.url_name == 'edit_venue' or request.resolver_match.url_name == 'delete_venue' %}active{% endif %}"
+              href="{% url 'venue_list' %}"><i class="bi bi-geo-alt-fill me-2"></i>Venues</a></li>
+          <li class="nav-item"><a
+              class="nav-link {% if request.resolver_match.url_name == 'resource_list' or request.resolver_match.url_name == 'create_resource' or request.resolver_match.url_name == 'edit_resource' or request.resolver_match.url_name == 'delete_resource' or request.resolver_match.url_name == 'allocate_resource' %}active{% endif %}"
+              href="{% url 'resource_list' %}"><i class="bi bi-box-seam-fill me-2"></i>Resources</a></li>
+          <li class="nav-item"><a
+              class="nav-link {% if request.resolver_match.url_name == 'sponsor_list' or request.resolver_match.url_name == 'create_sponsor' or request.resolver_match.url_name == 'edit_sponsor' or request.resolver_match.url_name == 'delete_sponsor' %}active{% endif %}"
+              href="{% url 'sponsor_list' %}"><i class="bi bi-award-fill me-2"></i>Sponsors</a></li>
+          <li class="nav-item"><a
+              class="nav-link {% if request.resolver_match.url_name == 'budget_overview' or request.resolver_match.url_name == 'create_expense' or request.resolver_match.url_name == 'create_sponsorship' %}active{% endif %}"
+              href="{% url 'budget_overview' %}"><i class="bi bi-cash-coin me-2"></i>Budget & Sponsors</a></li>
+          <li class="nav-item"><a
+              class="nav-link {% if request.resolver_match.url_name == 'reports_home' %}active{% endif %}"
+              href="{% url 'reports_home' %}"><i class="bi bi-file-earmark-bar-graph-fill me-2"></i>Reports</a></li>
+          <li class="nav-item"><a
+              class="nav-link {% if request.resolver_match.url_name == 'qr_checkin' %}active{% endif %}"
+              href="{% url 'qr_checkin' %}"><i class="bi bi-qr-code-scan me-2"></i>QR Check-in</a></li>
+          <li class="nav-item"><a
+              class="nav-link {% if request.resolver_match.url_name == 'completed_events' %}active{% endif %}"
+              href="{% url 'completed_events' %}"><i class="bi bi-flag-fill me-2"></i>Completed Events</a></li>
+          <li class="nav-item"><a
+              class="nav-link {% if request.resolver_match.url_name == 'contact' %}active{% endif %}"
+              href="{% url 'contact' %}"><i class="bi bi-envelope-fill me-2"></i>Contact</a></li>
+          <li class="nav-item"><a
+              class="nav-link {% if request.resolver_match.url_name == 'contact_message_list' or request.resolver_match.url_name == 'contact_message_detail' %}active{% endif %}"
+              href="{% url 'contact_message_list' %}"><i class="bi bi-inbox-fill me-2"></i>Contact Inquiries</a></li>
+        </ul>
+ 
+        <span class="sidebar-footer" style="padding: 10px 20px; font-size: 0.8rem; color: #6c757d;">
+          © 2026 EventSphere
+        </span>
       </div>
-      <ul class="nav flex-column">
-        <li class="nav-item">
-          <a class="nav-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}" href="{% url 'dashboard' %}"><i class="bi bi-grid-fill me-2"></i>Dashboard</a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link d-flex justify-content-between align-items-center" data-bs-toggle="collapse" href="#eventCategoryMenu" role="button" aria-expanded="{% if request.resolver_match.url_name in 'create_category,category_list,edit_category,delete_category' %}true{% else %}false{% endif %}">
-            <span><i class="bi bi-folder-fill me-2"></i>Event Category</span><i class="bi bi-chevron-down small"></i>
-          </a>
-          <div class="collapse {% if request.resolver_match.url_name in 'create_category,category_list,edit_category,delete_category' %}show{% endif %}" id="eventCategoryMenu">
-            <ul class="nav flex-column sub-menu">
-              <li class="nav-item"><a class="nav-link {% if request.resolver_match.url_name == 'create_category' %}active{% endif %}" href="{% url 'create_category' %}"><i class="bi bi-pencil-square me-2"></i>Create Category</a></li>
-              <li class="nav-item"><a class="nav-link {% if request.resolver_match.url_name == 'category_list' %}active{% endif %}" href="{% url 'category_list' %}"><i class="bi bi-list-ul me-2"></i>Category List</a></li>
-            </ul>
-          </div>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link d-flex justify-content-between align-items-center" data-bs-toggle="collapse" href="#eventsMenu" role="button" aria-expanded="{% if request.resolver_match.url_name in 'create_event,event_list,edit_event,delete_event,event_detail,event_history,update_event_status,add_event_member,remove_event_member,joined_events,add_event_wish,event_wish_list,approve_wish,reject_wish,remove_event_wish,update_member_registration_status' %}true{% else %}false{% endif %}">
-            <span><i class="bi bi-calendar-event-fill me-2"></i>Events</span><i class="bi bi-chevron-down small"></i>
-          </a>
-          <div class="collapse {% if request.resolver_match.url_name in 'create_event,event_list,edit_event,delete_event,event_detail,event_history,update_event_status,add_event_member,remove_event_member,joined_events,add_event_wish,event_wish_list,approve_wish,reject_wish,remove_event_wish,update_member_registration_status' %}show{% endif %}" id="eventsMenu">
-            <ul class="nav flex-column sub-menu">
-              <li class="nav-item"><a class="nav-link {% if request.resolver_match.url_name == 'create_event' %}active{% endif %}" href="{% url 'create_event' %}"><i class="bi bi-pencil-square me-2"></i>Create Event</a></li>
-              <li class="nav-item"><a class="nav-link {% if request.resolver_match.url_name == 'event_list' %}active{% endif %}" href="{% url 'event_list' %}"><i class="bi bi-list-ul me-2"></i>Event List</a></li>
-              <li class="nav-item"><a class="nav-link {% if request.resolver_match.url_name == 'add_event_member' %}active{% endif %}" href="{% url 'add_event_member' %}"><i class="bi bi-person-plus-fill me-2"></i>Add Event Member</a></li>
-              <li class="nav-item"><a class="nav-link {% if request.resolver_match.url_name == 'joined_events' %}active{% endif %}" href="{% url 'joined_events' %}"><i class="bi bi-list-ul me-2"></i>Joined Events</a></li>
-              <li class="nav-item"><a class="nav-link {% if request.resolver_match.url_name == 'add_event_wish' %}active{% endif %}" href="{% url 'add_event_wish' %}"><i class="bi bi-heart-fill me-2"></i>Add Event Wish User</a></li>
-              <li class="nav-item"><a class="nav-link {% if request.resolver_match.url_name == 'event_wish_list' %}active{% endif %}" href="{% url 'event_wish_list' %}"><i class="bi bi-list-ul me-2"></i>Event Wish List</a></li>
-            </ul>
-          </div>
-        </li>
-        <li class="nav-item"><a class="nav-link {% if request.resolver_match.url_name == 'vendor_list' or request.resolver_match.url_name == 'create_vendor' or request.resolver_match.url_name == 'edit_vendor' or request.resolver_match.url_name == 'delete_vendor' %}active{% endif %}" href="{% url 'vendor_list' %}"><i class="bi bi-truck me-2"></i>Vendors</a></li>
-        <li class="nav-item"><a class="nav-link {% if request.resolver_match.url_name == 'venue_list' or request.resolver_match.url_name == 'create_venue' or request.resolver_match.url_name == 'edit_venue' or request.resolver_match.url_name == 'delete_venue' %}active{% endif %}" href="{% url 'venue_list' %}"><i class="bi bi-geo-alt-fill me-2"></i>Venues</a></li>
-        <li class="nav-item"><a class="nav-link {% if request.resolver_match.url_name == 'resource_list' or request.resolver_match.url_name == 'create_resource' or request.resolver_match.url_name == 'edit_resource' or request.resolver_match.url_name == 'delete_resource' or request.resolver_match.url_name == 'allocate_resource' %}active{% endif %}" href="{% url 'resource_list' %}"><i class="bi bi-box-seam-fill me-2"></i>Resources</a></li>
-        <li class="nav-item"><a class="nav-link {% if request.resolver_match.url_name == 'sponsor_list' or request.resolver_match.url_name == 'create_sponsor' or request.resolver_match.url_name == 'edit_sponsor' or request.resolver_match.url_name == 'delete_sponsor' %}active{% endif %}" href="{% url 'sponsor_list' %}"><i class="bi bi-award-fill me-2"></i>Sponsors</a></li>
-        <li class="nav-item"><a class="nav-link {% if request.resolver_match.url_name == 'budget_overview' or request.resolver_match.url_name == 'create_expense' or request.resolver_match.url_name == 'create_sponsorship' %}active{% endif %}" href="{% url 'budget_overview' %}"><i class="bi bi-cash-coin me-2"></i>Budget & Sponsors</a></li>
-        <li class="nav-item"><a class="nav-link {% if request.resolver_match.url_name == 'reports_home' %}active{% endif %}" href="{% url 'reports_home' %}"><i class="bi bi-file-earmark-bar-graph-fill me-2"></i>Reports</a></li>
-        <li class="nav-item"><a class="nav-link {% if request.resolver_match.url_name == 'qr_checkin' %}active{% endif %}" href="{% url 'qr_checkin' %}"><i class="bi bi-qr-code-scan me-2"></i>QR Check-in</a></li>
-        <li class="nav-item"><a class="nav-link {% if request.resolver_match.url_name == 'completed_events' %}active{% endif %}" href="{% url 'completed_events' %}"><i class="bi bi-flag-fill me-2"></i>Completed Events</a></li>
-        <li class="nav-item"><a class="nav-link {% if request.resolver_match.url_name == 'contact' %}active{% endif %}" href="{% url 'contact' %}"><i class="bi bi-envelope-fill me-2"></i>Contact</a></li>
-      </ul>
     </nav>
 
     <div class="main-content">
       <div class="topbar">
-        <a href="{% url 'dashboard' %}">Home</a>
-        <a href="{% url 'contact' %}">Contact</a>
-        <div class="search-box"><input type="text" class="form-control" placeholder="Search..."></div>
+        <div class="topbar-left">
+          <a href="{% url 'dashboard' %}">Home</a>
+          <a href="{% url 'contact' %}">Contact</a>
+        </div>
 
-        {% block topbar_extra %}
-        <a href="{% url 'profile' %}">Profile</a>
-        <form method="post" action="{% url 'logout' %}">{% csrf_token %}<button type="submit" class="text-danger">Logout</button></form>
-        {% endblock %}
+        <div class="topbar-center">
+          <div class="search-box global-search-wrapper">
+            <input type="text" id="globalSearchInput" class="form-control"
+              placeholder="Search events, categories, vendors, venues..." autocomplete="off">
+            <div class="global-search-results" id="globalSearchResults"></div>
+          </div>
+        </div>
+
+        <div class="topbar-right">
+          <div class="dropdown" style="position:relative;">
+            <button type="button" class="notif-bell-btn" id="notifBellBtn">
+              <i class="bi bi-bell-fill"></i>
+              <span class="notif-badge-count" id="notifBadgeCount" style="display:none;">0</span>
+            </button>
+            <div class="notif-dropdown-glass" id="notifDropdown">
+              <div class="notif-dropdown-header">
+                <span>Notifications</span>
+                <button type="button" class="notif-mark-all-btn" onclick="markAllNotifsRead(event)">Mark all as
+                  read</button>
+              </div>
+              <div id="notifListContainer">
+                <div class="notif-empty">Loading...</div>
+              </div>
+            </div>
+          </div>
+          <a href="{% url 'profile' %}">Profile</a>
+          <form method="post" action="{% url 'logout' %}">{% csrf_token %}<button type="submit"
+              class="text-danger">Logout</button></form>
+        </div>
       </div>
 
       {% block content %}{% endblock %}
@@ -126,7 +210,8 @@
         <span class="pill-swatch swatch-navbar" data-bg="#f28c1e" data-text="#ffffff" style="background:#f28c1e"></span>
         <span class="pill-swatch swatch-navbar" data-bg="#17a2b8" data-text="#ffffff" style="background:#17a2b8"></span>
         <span class="pill-swatch swatch-navbar" data-bg="#1e1b2e" data-text="#ffffff" style="background:#1e1b2e"></span>
-        <span class="pill-swatch swatch-navbar" data-bg="#ffffff" data-text="#212529" style="background:#ffffff; border:1px solid #ccc;"></span>
+        <span class="pill-swatch swatch-navbar" data-bg="#ffffff" data-text="#212529"
+          style="background:#ffffff; border:1px solid #ccc;"></span>
       </div>
 
       <h6>Sidebar Color</h6>
@@ -154,6 +239,116 @@
   </div>
   <script src="{% static 'js/customizer.js' %}"></script>
 
+  <script>
+    // ---------- Notification Bell (unchanged) ----------
+    function refreshNotifDropdown() {
+      fetch("{% url 'notification_recent_api' %}", { credentials: 'same-origin' })
+        .then(r => r.json())
+        .then(data => {
+          const badge = document.getElementById('notifBadgeCount');
+          const list = document.getElementById('notifListContainer');
+          if (!badge || !list) return;
+
+          if (data.unread_count > 0) {
+            badge.textContent = data.unread_count;
+            badge.style.display = 'inline-block';
+          } else {
+            badge.style.display = 'none';
+          }
+
+          if (!data.notifications.length) {
+            list.innerHTML = '<div class="notif-empty">No notifications yet.</div>';
+            return;
+          }
+
+          list.innerHTML = data.notifications.map(n => {
+            const dotClass = n.type === 'inquiry' ? 'dot-inquiry' : 'dot-event';
+            const readUrl = '/notifications/read/' + n.id + '/';
+            return `
+              <a href="${readUrl}" class="notif-item ${n.is_read ? '' : 'unread'}">
+                <span class="notif-dot ${dotClass}"></span>
+                <span class="notif-body">
+                  <span class="notif-title">${n.title}</span>
+                  <span class="notif-text">${n.message}</span>
+                  <span class="notif-time">${n.timesince} ago</span>
+                </span>
+              </a>
+            `;
+          }).join('');
+        })
+        .catch(() => { });
+    }
+
+    function markAllNotifsRead(e) {
+      e.preventDefault();
+      fetch("{% url 'mark_all_notifications_read' %}", {
+        method: 'GET',
+        credentials: 'same-origin',
+        headers: { 'X-Requested-With': 'XMLHttpRequest' },
+      }).then(() => refreshNotifDropdown());
+    }
+
+    const notifBellBtn = document.getElementById('notifBellBtn');
+    const notifDropdown = document.getElementById('notifDropdown');
+    if (notifBellBtn) {
+      notifBellBtn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        notifDropdown.classList.toggle('show');
+        if (notifDropdown.classList.contains('show')) refreshNotifDropdown();
+      });
+      document.addEventListener('click', function (e) {
+        if (!notifDropdown.contains(e.target) && e.target !== notifBellBtn) {
+          notifDropdown.classList.remove('show');
+        }
+      });
+      refreshNotifDropdown();
+      setInterval(refreshNotifDropdown, 15000);
+    }
+
+    // ---------- Global Search (unchanged) ----------
+    const globalSearchInput = document.getElementById('globalSearchInput');
+    const globalSearchResults = document.getElementById('globalSearchResults');
+    let searchDebounceTimer = null;
+
+    if (globalSearchInput) {
+      globalSearchInput.addEventListener('input', function () {
+        clearTimeout(searchDebounceTimer);
+        const q = this.value.trim();
+
+        if (q.length < 2) {
+          globalSearchResults.classList.remove('show');
+          return;
+        }
+
+        searchDebounceTimer = setTimeout(() => {
+          fetch("{% url 'global_search_api' %}?q=" + encodeURIComponent(q), { credentials: 'same-origin' })
+            .then(r => r.json())
+            .then(data => {
+              if (!data.results.length) {
+                globalSearchResults.innerHTML = '<div class="global-search-empty">No matching results found.</div>';
+              } else {
+                globalSearchResults.innerHTML = data.results.map(r => `
+                  <a href="${r.url}" class="global-search-result-item">
+                    <span>${r.label}</span>
+                    <span class="global-search-result-type">${r.type}</span>
+                  </a>
+                `).join('');
+              }
+              globalSearchResults.classList.add('show');
+            })
+            .catch(() => { });
+        }, 300);
+      });
+
+      document.addEventListener('click', function (e) {
+        if (!globalSearchInput.contains(e.target) && !globalSearchResults.contains(e.target)) {
+          globalSearchResults.classList.remove('show');
+        }
+      });
+    }
+  </script>
+
   {% block extra_scripts %}{% endblock %}
 </body>
+
 </html>

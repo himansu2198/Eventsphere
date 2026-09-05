@@ -3,6 +3,8 @@
 
 {% block title %}Event Category List{% endblock %}
 
+
+
 {% block content %}
   <div class="content-card">
     {% if messages %}
@@ -27,7 +29,6 @@
       </div>
     </div>
 
-    <!-- Grid view -->
     <div id="gridView" class="card-grid">
       {% for cat in categories %}
       <div class="grid-card">
@@ -69,7 +70,6 @@
       {% endfor %}
     </div>
 
-    <!-- Table view (hidden by default) -->
     <table class="table d-none" id="tableViewTable">
       <thead>
         <tr><th>#</th><th>Name</th><th>Code</th><th>Image</th><th>Status</th><th>Actions</th></tr>
@@ -124,4 +124,4 @@
       gridView.classList.add('d-none');
     });
   </script>
-{% endblock %}
+{% endblock %}  

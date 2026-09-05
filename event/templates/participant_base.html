@@ -1,0 +1,344 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}EventSphere{% endblock %}</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+  <link rel="stylesheet" href="{% static 'css/style.css' %}?v=8">
+  <link rel="stylesheet" href="{% static 'css/participant.css' %}?v=2">
+  {% block extra_head %}{% endblock %}
+</head>
+<body class="participant-body">
+  <div class="app-wrapper">
+    <nav class="sidebar participant-sidebar">
+      <div class="brand">
+        {% if user.profile.avatar %}
+          <img src="{{ user.profile.avatar.url }}" alt="Profile" width="64" height="64" style="width:64px !important; height:64px !important; border-radius:50%; object-fit:cover; display:block; margin:0 auto 10px auto; border:2px solid rgba(255,255,255,0.2);">
+        {% else %}
+          <div style="width:64px; height:64px; border-radius:50%; background:rgba(255,255,255,0.15); display:flex; align-items:center; justify-content:center; margin:0 auto 10px auto; border:2px solid rgba(255,255,255,0.2);">
+            <i class="bi bi-person-fill" style="font-size:1.8rem; color:rgba(255,255,255,0.6);"></i>
+          </div>
+        {% endif %}
+        <h4>Participant</h4>
+        <p>Welcome, {{ user.username }}!</p>
+      </div>
+      <ul class="nav flex-column">
+        <li class="nav-item"><a class="nav-link {% if request.resolver_match.url_name == 'participant_dashboard' %}active{% endif %}" href="{% url 'participant_dashboard' %}"><i class="bi bi-grid-fill me-2"></i>My Dashboard</a></li>
+        <li class="nav-item"><a class="nav-link {% if request.resolver_match.url_name == 'participant_event_list' or request.resolver_match.url_name == 'participant_event_detail' %}active{% endif %}" href="{% url 'participant_event_list' %}"><i class="bi bi-calendar-event-fill me-2"></i>Events Schedule</a></li>
+        <li class="nav-item"><a class="nav-link" href="{% url 'participant_dashboard' %}#tickets-section"><i class="bi bi-ticket-perforated-fill me-2"></i>My Tickets</a></li>
+        <li class="nav-item"><a class="nav-link {% if request.resolver_match.url_name == 'profile' %}active{% endif %}" href="{% url 'profile' %}"><i class="bi bi-person-fill me-2"></i>My Profile</a></li>
+        <li class="nav-item"><a class="nav-link {% if request.resolver_match.url_name == 'contact' %}active{% endif %}" href="{% url 'contact' %}"><i class="bi bi-envelope-fill me-2"></i>Contact</a></li>
+      </ul>
+    </nav>
+
+    <div class="main-content">
+      <div class="topbar participant-topbar">
+        <div class="participant-topbar-left">
+          <a href="{% url 'participant_dashboard' %}">Home</a>
+          <a href="{% url 'contact' %}">Contact</a>
+        </div>
+
+        <div class="participant-topbar-center">
+          <div class="search-box global-search-wrapper">
+            <input type="text" id="participantSearchInput" class="form-control" placeholder="Search events..." autocomplete="off">
+            <div class="global-search-results" id="participantSearchResults"></div>
+          </div>
+        </div>
+
+        <div class="participant-topbar-right">
+          <div class="dropdown" style="position:relative;">
+            <button type="button" class="notif-bell-btn" id="notifBellBtn">
+              <i class="bi bi-bell-fill"></i>
+              <span class="notif-badge-count" id="notifBadgeCount" style="display:none;">0</span>
+            </button>
+            <div class="notif-dropdown-glass" id="notifDropdown">
+              <div class="notif-dropdown-header">
+                <span>Notifications</span>
+                <button type="button" class="notif-mark-all-btn" onclick="markAllNotifsRead(event)">Mark all as read</button>
+              </div>
+              <div id="notifListContainer">
+                <div class="notif-empty">Loading...</div>
+              </div>
+            </div>
+          </div>
+          <a href="{% url 'profile' %}">Profile</a>
+          <form method="post" action="{% url 'logout' %}" style="margin:0;">{% csrf_token %}<button type="submit" class="text-danger">Logout</button></form>
+        </div>
+      </div>
+
+      {% if messages %}
+        {% for message in messages %}
+          <div class="alert {% if message.tags == 'error' %}alert-danger{% else %}alert-success{% endif %}">{{ message }}</div>
+        {% endfor %}
+      {% endif %}
+
+      {% block content %}{% endblock %}
+
+    </div>
+  </div>
+
+  <!-- ================================
+       Floating Participant Chat Assistant
+       Shared across every participant page
+       ================================ -->
+  <button type="button" class="chat-fab" id="chatFabBtn" aria-label="Open EventSphere Assistant">
+    <i class="bi bi-robot"></i>
+  </button>
+
+  <div class="chat-fab-window" id="chatFabWindow">
+    <div class="chat-fab-header">
+      <div class="chat-fab-header-left">
+        <div class="chat-fab-avatar"><i class="bi bi-robot"></i><span class="chat-fab-dot"></span></div>
+        <div>
+          <h6 class="mb-0">EventSphere Assistant</h6>
+          <p class="mb-0">Your Event Support Assistant</p>
+        </div>
+      </div>
+      <button type="button" class="chat-fab-close" id="chatFabCloseBtn" aria-label="Close chat">
+        <i class="bi bi-x-lg"></i>
+      </button>
+    </div>
+
+    <div class="chat-fab-body" id="chatFabBody">
+      <div class="chat-fab-welcome">
+        <div class="chat-fab-welcome-icon"><i class="bi bi-robot"></i></div>
+        <h3>Hi {{ user.first_name|default:user.username }} 👋</h3>
+        <p>How can I help you today?</p>
+      </div>
+    </div>
+
+    <div class="chat-fab-quick-actions">
+      <button type="button" class="chat-fab-quick-btn" data-q="How do I register for an event?">How do I register?</button>
+      <button type="button" class="chat-fab-quick-btn" data-q="Where can I find my QR tickets?">Where are my tickets?</button>
+      <button type="button" class="chat-fab-quick-btn" data-q="How does QR Check-in work?">QR Check-in</button>
+      <button type="button" class="chat-fab-quick-btn" data-q="How do I cancel my registration?">Cancel Registration</button>
+      <button type="button" class="chat-fab-quick-btn" data-q="How do I contact support?">Contact Support</button>
+    </div>
+
+    <form class="chat-fab-input-bar" id="chatFabForm">
+      {% csrf_token %}
+      <input type="text" id="chatFabInput" placeholder="Type your question..." autocomplete="off" required>
+      <button type="submit" id="chatFabSendBtn"><i class="bi bi-send-fill"></i></button>
+    </form>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+  <script>
+    // ---------- Notification Bell (unchanged) ----------
+    function refreshNotifDropdown() {
+      fetch("{% url 'notification_recent_api' %}", { credentials: 'same-origin' })
+        .then(r => r.json())
+        .then(data => {
+          const badge = document.getElementById('notifBadgeCount');
+          const list = document.getElementById('notifListContainer');
+          if (!badge || !list) return;
+
+          if (data.unread_count > 0) {
+            badge.textContent = data.unread_count;
+            badge.style.display = 'inline-block';
+          } else {
+            badge.style.display = 'none';
+          }
+
+          if (!data.notifications.length) {
+            list.innerHTML = '<div class="notif-empty">No notifications yet.</div>';
+            return;
+          }
+
+          list.innerHTML = data.notifications.map(n => {
+            const dotClass = n.type === 'inquiry' ? 'dot-inquiry' : 'dot-event';
+            const readUrl = '/notifications/read/' + n.id + '/';
+            return `
+              <a href="${readUrl}" class="notif-item ${n.is_read ? '' : 'unread'}">
+                <span class="notif-dot ${dotClass}"></span>
+                <span class="notif-body">
+                  <span class="notif-title">${n.title}</span>
+                  <span class="notif-text">${n.message}</span>
+                  <span class="notif-time">${n.timesince} ago</span>
+                </span>
+              </a>
+            `;
+          }).join('');
+        })
+        .catch(() => {});
+    }
+
+    function markAllNotifsRead(e) {
+      e.preventDefault();
+      fetch("{% url 'mark_all_notifications_read' %}", {
+        method: 'GET',
+        credentials: 'same-origin',
+        headers: { 'X-Requested-With': 'XMLHttpRequest' },
+      }).then(() => refreshNotifDropdown());
+    }
+
+    const notifBellBtn = document.getElementById('notifBellBtn');
+    const notifDropdown = document.getElementById('notifDropdown');
+    if (notifBellBtn) {
+      notifBellBtn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        notifDropdown.classList.toggle('show');
+        if (notifDropdown.classList.contains('show')) refreshNotifDropdown();
+      });
+      document.addEventListener('click', function (e) {
+        if (!notifDropdown.contains(e.target) && e.target !== notifBellBtn) {
+          notifDropdown.classList.remove('show');
+        }
+      });
+      refreshNotifDropdown();
+      setInterval(refreshNotifDropdown, 15000);
+    }
+
+    // ---------- Participant Search (unchanged) ----------
+    const participantSearchInput = document.getElementById('participantSearchInput');
+    const participantSearchResults = document.getElementById('participantSearchResults');
+    let participantSearchDebounce = null;
+
+    if (participantSearchInput) {
+      participantSearchInput.addEventListener('input', function () {
+        clearTimeout(participantSearchDebounce);
+        const q = this.value.trim();
+
+        if (q.length < 2) {
+          participantSearchResults.classList.remove('show');
+          return;
+        }
+
+        participantSearchDebounce = setTimeout(() => {
+          fetch("{% url 'participant_search_api' %}?q=" + encodeURIComponent(q), { credentials: 'same-origin' })
+            .then(r => r.json())
+            .then(data => {
+              if (!data.results.length) {
+                participantSearchResults.innerHTML = '<div class="global-search-empty">No matching results found.</div>';
+              } else {
+                participantSearchResults.innerHTML = data.results.map(r => `
+                  <a href="${r.url}" class="global-search-result-item">
+                    <span>${r.label}</span>
+                    <span class="global-search-result-type">${r.type}</span>
+                  </a>
+                `).join('');
+              }
+              participantSearchResults.classList.add('show');
+            })
+            .catch(() => {});
+        }, 300);
+      });
+
+      document.addEventListener('click', function (e) {
+        if (!participantSearchInput.contains(e.target) && !participantSearchResults.contains(e.target)) {
+          participantSearchResults.classList.remove('show');
+        }
+      });
+    }
+
+    // ---------- Floating Chat Assistant (reuses existing chatbot_faq endpoint) ----------
+    const chatFabBtn = document.getElementById('chatFabBtn');
+    const chatFabWindow = document.getElementById('chatFabWindow');
+    const chatFabCloseBtn = document.getElementById('chatFabCloseBtn');
+    const chatFabBody = document.getElementById('chatFabBody');
+    const chatFabForm = document.getElementById('chatFabForm');
+    const chatFabInput = document.getElementById('chatFabInput');
+    const chatFabSendBtn = document.getElementById('chatFabSendBtn');
+    let fabWelcomeCleared = false;
+
+    function toggleChatFab(open) {
+      if (open) {
+        chatFabWindow.classList.add('open');
+        chatFabBtn.classList.add('fab-hidden');
+      } else {
+        chatFabWindow.classList.remove('open');
+        chatFabBtn.classList.remove('fab-hidden');
+      }
+    }
+
+    chatFabBtn.addEventListener('click', () => toggleChatFab(true));
+    chatFabCloseBtn.addEventListener('click', () => toggleChatFab(false));
+
+    function fabFormatTime() {
+      const now = new Date();
+      return now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
+    }
+
+    function fabClearWelcome() {
+      if (!fabWelcomeCleared) {
+        chatFabBody.innerHTML = '';
+        fabWelcomeCleared = true;
+      }
+    }
+
+    function fabScrollBottom() {
+      chatFabBody.scrollTop = chatFabBody.scrollHeight;
+    }
+
+    function fabAppendMessage(text, isUser) {
+      fabClearWelcome();
+      const row = document.createElement('div');
+      row.className = 'chat-fab-msg-row ' + (isUser ? 'user' : 'bot');
+      const bubble = document.createElement('div');
+      bubble.className = 'chat-fab-bubble';
+      bubble.textContent = text;
+      const time = document.createElement('div');
+      time.className = 'chat-fab-time';
+      time.textContent = fabFormatTime();
+      row.appendChild(bubble);
+      row.appendChild(time);
+      chatFabBody.appendChild(row);
+      fabScrollBottom();
+    }
+
+    function fabShowTyping() {
+      fabClearWelcome();
+      const row = document.createElement('div');
+      row.className = 'chat-fab-msg-row bot';
+      row.id = 'chatFabTypingRow';
+      row.innerHTML = '<div class="chat-fab-typing"><span></span><span></span><span></span></div>';
+      chatFabBody.appendChild(row);
+      fabScrollBottom();
+    }
+
+    function fabHideTyping() {
+      document.getElementById('chatFabTypingRow')?.remove();
+    }
+
+    function fabSendQuestion(question) {
+      fabAppendMessage(question, true);
+      chatFabInput.value = '';
+      chatFabSendBtn.disabled = true;
+      fabShowTyping();
+
+      fetch("{% url 'chatbot_faq' %}", {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'X-Requested-With': 'XMLHttpRequest' },
+        body: 'question=' + encodeURIComponent(question) + '&csrfmiddlewaretoken={{ csrf_token }}',
+      })
+      .then(res => res.json())
+      .then(data => {
+        fabHideTyping();
+        fabAppendMessage(data.answer, false);
+        chatFabSendBtn.disabled = false;
+      })
+      .catch(() => {
+        fabHideTyping();
+        fabAppendMessage("Something went wrong. Please try again.", false);
+        chatFabSendBtn.disabled = false;
+      });
+    }
+
+    chatFabForm.addEventListener('submit', function (e) {
+      e.preventDefault();
+      const q = chatFabInput.value.trim();
+      if (q) fabSendQuestion(q);
+    });
+
+    document.querySelectorAll('.chat-fab-quick-btn').forEach(btn => {
+      btn.addEventListener('click', () => fabSendQuestion(btn.dataset.q));
+    });
+  </script>
+
+  {% block extra_scripts %}{% endblock %}
+</body>
+</html>

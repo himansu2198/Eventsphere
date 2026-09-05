@@ -1,0 +1,105 @@
+{% extends 'admin_base.html' %}
+{% load static %}
+
+{% block title %}Search Results{% endblock %}
+
+
+{% block content %}
+  <div class="content-card">
+    <div class="page-header-row">
+      <div>
+        <h2>Search Results</h2>
+        {% if query %}
+          <p class="page-subtitle">{{ total_results }} result{{ total_results|pluralize }} for "{{ query }}"</p>
+        {% else %}
+          <p class="page-subtitle">Enter a search term above to find events, categories, vendors, venues, resources, or sponsors.</p>
+        {% endif %}
+      </div>
+    </div>
+
+    {% if query and total_results == 0 %}
+      <div class="empty-state">
+        <i class="bi bi-search"></i>
+        <p class="mb-0">No results found for "{{ query }}". Try a different search term.</p>
+      </div>
+    {% endif %}
+
+    {% if events %}
+    <h4 class="mt-4 mb-3"><i class="bi bi-calendar-event-fill me-2" style="color:#4f46e5;"></i>Events</h4>
+    <div class="card-grid mb-2">
+      {% for ev in events %}
+      <a href="{% url 'event_detail' ev.pk %}" class="grid-card" style="text-decoration:none; color:inherit; display:block;">
+        <div class="card-top-row"><span class="category-pill">{{ ev.category.name }}</span></div>
+        <h4>{{ ev.name }}</h4>
+        <div class="card-meta-line"><i class="bi bi-geo-alt-fill"></i>{{ ev.venue|default:"No venue set" }}</div>
+      </a>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if categories %}
+    <h4 class="mt-4 mb-3"><i class="bi bi-folder-fill me-2" style="color:#4f46e5;"></i>Categories</h4>
+    <div class="card-grid mb-2">
+      {% for cat in categories %}
+      <a href="{% url 'edit_category' cat.pk %}" class="grid-card" style="text-decoration:none; color:inherit; display:block;">
+        <div class="card-top-row"><span class="code-pill">{{ cat.code }}</span></div>
+        <h4>{{ cat.name }}</h4>
+        <div class="card-meta-line"><span class="status-badge-pill status-{{ cat.status }}">{{ cat.status }}</span></div>
+      </a>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if vendors %}
+    <h4 class="mt-4 mb-3"><i class="bi bi-truck me-2" style="color:#4f46e5;"></i>Vendors</h4>
+    <div class="card-grid mb-2">
+      {% for v in vendors %}
+      <a href="{% url 'edit_vendor' v.pk %}" class="grid-card" style="text-decoration:none; color:inherit; display:block;">
+        <div class="card-top-row"><span class="category-pill text-capitalize">{{ v.service_type }}</span></div>
+        <h4>{{ v.name }}</h4>
+        <div class="card-meta-line"><i class="bi bi-person-fill"></i>{{ v.contact_person|default:"-" }}</div>
+      </a>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if venues %}
+    <h4 class="mt-4 mb-3"><i class="bi bi-geo-alt-fill me-2" style="color:#4f46e5;"></i>Venues</h4>
+    <div class="card-grid mb-2">
+      {% for ven in venues %}
+      <a href="{% url 'edit_venue' ven.pk %}" class="grid-card" style="text-decoration:none; color:inherit; display:block;">
+        <div class="card-top-row"><span class="category-pill">{{ ven.get_venue_type_display }}</span></div>
+        <h4>{{ ven.name }}</h4>
+        <div class="card-meta-line"><i class="bi bi-people-fill"></i>{{ ven.capacity }} seats</div>
+      </a>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if resources %}
+    <h4 class="mt-4 mb-3"><i class="bi bi-box-seam-fill me-2" style="color:#4f46e5;"></i>Resources</h4>
+    <div class="card-grid mb-2">
+      {% for r in resources %}
+      <a href="{% url 'edit_resource' r.pk %}" class="grid-card" style="text-decoration:none; color:inherit; display:block;">
+        <div class="card-top-row"><span class="category-pill text-capitalize">{{ r.get_category_display }}</span></div>
+        <h4>{{ r.name }}</h4>
+        <div class="card-meta-line"><i class="bi bi-boxes"></i>{{ r.total_quantity }} total</div>
+      </a>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if sponsors %}
+    <h4 class="mt-4 mb-3"><i class="bi bi-award-fill me-2" style="color:#4f46e5;"></i>Sponsors</h4>
+    <div class="card-grid mb-2">
+      {% for s in sponsors %}
+      <a href="{% url 'edit_sponsor' s.pk %}" class="grid-card" style="text-decoration:none; color:inherit; display:block;">
+        <div class="card-top-row"></div>
+        <h4>{{ s.name }}</h4>
+        <div class="card-meta-line"><i class="bi bi-person-fill"></i>{{ s.contact_person|default:"-" }}</div>
+      </a>
+      {% endfor %}
+    </div>
+    {% endif %}
+  </div>
+{% endblock %}

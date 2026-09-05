@@ -1,10 +1,14 @@
 {% extends 'admin_base.html' %}
 {% load static %}
 
-{% block title %}{% if sponsor %}Edit{% else %}Register{% endif %} Sponsor{% endblock %}
+{% block title %}{% if sponsor %}Edit Sponsor{% else %}Register Sponsor{% endif %}{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css">
+{% endblock %}
 
 {% block content %}
-  <div class="content-card" style="max-width:600px; margin:0 auto;">
+  <div class="content-card" style="max-width:700px; margin:0 auto;">
     <h2>{% if sponsor %}Edit Sponsor{% else %}Register Sponsor{% endif %}</h2>
 
     {% if messages %}
@@ -13,44 +17,91 @@
       {% endfor %}
     {% endif %}
 
-    {% if sponsor.logo %}
-      <div class="text-center mb-3">
-        <img src="{{ sponsor.logo.url }}" style="width:80px; height:80px; object-fit:contain; border-radius:8px; background:#f7f7fd; padding:8px;">
-      </div>
-    {% endif %}
-
     <form method="post" enctype="multipart/form-data">
       {% csrf_token %}
+
       <div class="mb-3">
-        <label class="form-label fw-bold">Sponsor Name*</label>
+        <label class="form-label">Sponsor Name<span class="required-mark">*</span></label>
         <input type="text" name="name" class="form-control" value="{{ sponsor.name|default:'' }}" required>
       </div>
+
       <div class="mb-3">
-        <label class="form-label fw-bold">Logo</label>
-        <input type="file" name="logo" class="form-control" accept="image/*">
+        <label class="form-label">Sponsor Logo / Banner</label>
+
+        {% if sponsor.logo %}
+          <div class="image-upload-preview-box" id="currentLogoBox">
+            <img src="{{ sponsor.logo.url }}" alt="Current logo">
+          </div>
+          <div class="text-muted mb-2" style="font-size:0.78rem;">Current image shown above. Choosing a new file below will replace it after cropping.</div>
+        {% endif %}
+
+        <div class="image-upload-preview-box" id="newLogoPreviewBox" style="display:none;">
+          <img id="logoPreview" alt="Cropped preview">
+        </div>
+
+        <input type="file" id="id_logo" name="logo" class="form-control" accept="image/*">
+        <div class="text-muted" style="font-size:0.78rem; margin-top:4px;">Select an image — a crop editor will open automatically to fit the banner area cleanly.</div>
       </div>
-      <div class="mb-3">
-        <label class="form-label fw-bold">Contact Person</label>
-        <input type="text" name="contact_person" class="form-control" value="{{ sponsor.contact_person|default:'' }}">
+
+      <div class="row g-3">
+        <div class="col-md-6">
+          <div class="mb-3">
+            <label class="form-label">Contact Person</label>
+            <input type="text" name="contact_person" class="form-control" value="{{ sponsor.contact_person|default:'' }}">
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="mb-3">
+            <label class="form-label">Email</label>
+            <input type="email" name="email" class="form-control" value="{{ sponsor.email|default:'' }}">
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="mb-3">
+            <label class="form-label">Phone</label>
+            <input type="text" name="phone" class="form-control" value="{{ sponsor.phone|default:'' }}">
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="mb-3">
+            <label class="form-label">Website</label>
+            <input type="url" name="website" class="form-control" value="{{ sponsor.website|default:'' }}" placeholder="https://">
+          </div>
+        </div>
       </div>
+
       <div class="mb-3">
-        <label class="form-label fw-bold">Email</label>
-        <input type="email" name="email" class="form-control" value="{{ sponsor.email|default:'' }}">
-      </div>
-      <div class="mb-3">
-        <label class="form-label fw-bold">Phone</label>
-        <input type="tel" name="phone" class="form-control" value="{{ sponsor.phone|default:'' }}">
-      </div>
-      <div class="mb-3">
-        <label class="form-label fw-bold">Website</label>
-        <input type="url" name="website" class="form-control" value="{{ sponsor.website|default:'' }}" placeholder="https://example.com">
-      </div>
-      <div class="mb-3">
-        <label class="form-label fw-bold">Notes</label>
+        <label class="form-label">Notes</label>
         <textarea name="notes" class="form-control" rows="3">{{ sponsor.notes|default:'' }}</textarea>
       </div>
+
       <button type="submit" class="btn btn-primary">{% if sponsor %}Update{% else %}Save{% endif %} Sponsor</button>
       <a href="{% url 'sponsor_list' %}" class="btn btn-secondary">Cancel</a>
     </form>
   </div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js"></script>
+<script src="{% static 'js/image-cropper.js' %}"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    ImageCropper.attach({
+      inputId: 'id_logo',
+      ratio: 360 / 110,       // matches the confirmed Category List banner: 100% width x 110px height on a 360px-max card
+      outputWidth: 720,
+      outputHeight: 220,
+      previewId: 'logoPreview',
+    });
+
+    const fileInput = document.getElementById('id_logo');
+    const newBox = document.getElementById('newLogoPreviewBox');
+    fileInput.addEventListener('change', function () {
+      // Preview box is shown once ImageCropper finishes cropping (it sets
+      // the preview <img> src), so we reveal the container right away and
+      // let the cropper populate it — this keeps the two in sync.
+      newBox.style.display = 'block';
+    });
+  });
+</script>
 {% endblock %}

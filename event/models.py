@@ -11,6 +11,7 @@ class Profile(models.Model):
     role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='participant')
     phone = models.CharField(max_length=20, blank=True)
     avatar = models.ImageField(upload_to='avatars/', blank=True, null=True)
+    total_points = models.IntegerField(default=0, help_text="Cumulative points awarded from event attendance.")
 
     def __str__(self):
         return f"{self.user.username} ({self.role})"
@@ -182,7 +183,6 @@ class EventMember(models.Model):
         ('judge', 'Judge'),
     ]
 
-    # Roles that require attendance tracking and therefore need a QR ticket.
     ATTENDANCE_ROLES = ['participant', 'general', 'volunteer']
 
     REGISTRATION_STATUS_CHOICES = [
@@ -192,7 +192,6 @@ class EventMember(models.Model):
         ('cancelled', 'Cancelled'),
     ]
 
-    # Statuses allowed to physically check in at the event.
     ELIGIBLE_CHECKIN_STATUSES = ['confirmed']
 
     event = models.ForeignKey(Event, on_delete=models.CASCADE, related_name='members')
@@ -204,7 +203,9 @@ class EventMember(models.Model):
     department = models.CharField(max_length=100, blank=True, help_text="e.g. Computer Science, Mechanical Engineering")
     academic_year = models.CharField(max_length=20, blank=True, help_text="e.g. 1st Year, 2nd Year, Final Year")
     registration_status = models.CharField(max_length=20, choices=REGISTRATION_STATUS_CHOICES, default='confirmed')
+    ticket_code = models.CharField(max_length=20, unique=True, blank=True, null=True, help_text="Unique auto-generated ticket code, e.g. MEMBER-7X92K4")
     qr_code = models.ImageField(upload_to='qr_codes/', blank=True, null=True)
+    points_awarded = models.BooleanField(default=False, help_text="True once event points have been credited for a Present mark — prevents duplicate awarding.")
     joined_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
@@ -355,12 +356,18 @@ class SponsorshipRevenue(models.Model):
 
 
 class ContactMessage(models.Model):
+    STATUS_CHOICES = [
+        ('new', 'New'),
+        ('read', 'Read'),
+        ('resolved', 'Resolved'),
+    ]
+
     name = models.CharField(max_length=150)
     email = models.EmailField()
     subject = models.CharField(max_length=200, blank=True)
     message = models.TextField()
     submitted_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='contact_messages')
-    is_reviewed = models.BooleanField(default=False)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='new')
     submitted_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -368,6 +375,20 @@ class ContactMessage(models.Model):
 
     def __str__(self):
         return f"{self.name} - {self.subject or 'No subject'}"
+
+
+class ContactMessageReply(models.Model):
+    contact_message = models.ForeignKey(ContactMessage, on_delete=models.CASCADE, related_name='replies')
+    sender = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+    is_admin_reply = models.BooleanField(default=False)
+    message = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['created_at']
+
+    def __str__(self):
+        return f"Reply on #{self.contact_message_id} by {'Admin' if self.is_admin_reply else 'Participant'}"
 
 
 class Resource(models.Model):
@@ -412,3 +433,37 @@ class ResourceAllocation(models.Model):
 
     def __str__(self):
         return f"{self.quantity}x {self.resource.name} -> {self.event.name}"
+
+
+class Policy(models.Model):
+    CATEGORY_CHOICES = [
+        ('event_rules', 'Event Rules'),
+        ('registration', 'Registration'),
+        ('cancellation', 'Cancellation'),
+        ('refund', 'Refund'),
+        ('qr_checkin', 'QR Check-in'),
+        ('code_of_conduct', 'Code of Conduct'),
+        ('privacy', 'Privacy'),
+        ('terms', 'Terms & Conditions'),
+        ('other', 'Other'),
+    ]
+
+    STATUS_CHOICES = [
+        ('active', 'Active'),
+        ('inactive', 'Inactive'),
+    ]
+
+    title = models.CharField(max_length=200)
+    category = models.CharField(max_length=30, choices=CATEGORY_CHOICES, default='other')
+    content = models.TextField()
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='active')
+    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['category', 'title']
+        verbose_name_plural = 'Policies'
+
+    def __str__(self):
+        return self.title

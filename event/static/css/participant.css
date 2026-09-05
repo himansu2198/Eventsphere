@@ -1,0 +1,463 @@
+/* ================================
+   Participant UI — Fixed, independent theme
+   (Never affected by Admin Customizer settings)
+   ================================ */
+
+.participant-sidebar {
+  background-color: #1e1b2e !important;
+}
+
+.participant-sidebar .nav-link.active {
+  border-left: 3px solid #4f46e5 !important;
+}
+
+.participant-topbar {
+  background: #ffffff !important;
+}
+
+.participant-topbar a,
+.participant-topbar .dropdown-item {
+  color: #212529 !important;
+}
+
+.participant-topbar a:hover {
+  color: #4f46e5 !important;
+}
+
+.participant-body .btn-dark-pill,
+.participant-body .btn-primary {
+  background-color: #4f46e5 !important;
+  border-color: #4f46e5 !important;
+}
+
+.participant-body .status-badge-pill.status-active,
+.participant-body .category-pill {
+  background: #eef0ff !important;
+  color: #4f46e5 !important;
+}
+
+/* ================================
+   Participant Topbar — 3-section layout
+   (Left: Home/Contact | Center: Search | Right: Bell/Profile/Logout)
+   ================================ */
+
+.participant-topbar {
+  height: 64px;
+  padding: 0 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.participant-topbar-left {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex-shrink: 0;
+}
+
+.participant-topbar-center {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  padding: 0 24px;
+}
+
+.participant-topbar-center .search-box {
+  width: 100%;
+  max-width: 420px;
+}
+
+.participant-topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  flex-shrink: 0;
+}
+
+@media (max-width: 992px) {
+  .participant-topbar {
+    height: auto;
+    flex-wrap: wrap;
+    padding: 12px 16px;
+    gap: 10px;
+  }
+  .participant-topbar-center {
+    order: 3;
+    flex-basis: 100%;
+    padding: 0;
+  }
+  .participant-topbar-center .search-box {
+    max-width: 100%;
+  }
+}
+
+/* ================================
+   Participant Content Container — unified standard
+   Reference: Dashboard page — applies to every
+   .content-card across all participant pages
+   ================================ */
+
+.participant-body .main-content {
+  padding: 24px 32px;
+}
+
+.participant-body .content-card {
+  border-radius: 8px;
+  padding: 24px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+  max-width: 1100px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.participant-body h2 {
+  font-size: 1.6rem;
+  margin-bottom: 4px;
+}
+
+@media (max-width: 768px) {
+  .participant-body .main-content {
+    padding: 16px;
+  }
+  .participant-body .content-card {
+    padding: 18px;
+  }
+}
+
+/* ================================
+   Participant Contact — compact, centered card
+   Scoped exclusively to .participant-body so this
+   can never affect Admin's Contact or any other
+   Admin page.
+   ================================ */
+
+.participant-body .contact-page-card {
+  max-width: 640px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* ================================
+   Floating Participant Chat Assistant
+   ================================ */
+
+.chat-fab {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #4f46e5 0%, #3730a3 100%);
+  color: #fff;
+  border: none;
+  font-size: 1.4rem;
+  box-shadow: 0 8px 24px rgba(79, 70, 229, 0.4);
+  z-index: 1100;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+.chat-fab:hover {
+  transform: scale(1.06);
+}
+
+.chat-fab.fab-hidden {
+  opacity: 0;
+  pointer-events: none;
+  transform: scale(0.8);
+}
+
+.chat-fab-window {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  width: 360px;
+  height: 520px;
+  max-height: calc(100vh - 48px);
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  border-radius: 18px;
+  box-shadow: 0 20px 50px rgba(30, 27, 46, 0.25);
+  z-index: 1100;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  opacity: 0;
+  transform: translateY(20px) scale(0.96);
+  pointer-events: none;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.chat-fab-window.open {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  pointer-events: auto;
+}
+
+.chat-fab-header {
+  background: linear-gradient(135deg, #4f46e5 0%, #3730a3 100%);
+  color: #fff;
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+}
+
+.chat-fab-header-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.chat-fab-header h6 {
+  color: #fff;
+  font-weight: 700;
+  font-size: 0.92rem;
+}
+
+.chat-fab-header p {
+  color: rgba(255,255,255,0.8);
+  font-size: 0.72rem;
+}
+
+.chat-fab-avatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  position: relative;
+  flex-shrink: 0;
+}
+
+.chat-fab-dot {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 9px;
+  height: 9px;
+  background: #23a35a;
+  border: 2px solid #4f46e5;
+  border-radius: 50%;
+}
+
+.chat-fab-close {
+  background: none;
+  border: none;
+  color: #fff;
+  font-size: 1rem;
+  cursor: pointer;
+  padding: 4px;
+}
+
+.chat-fab-body {
+  flex-grow: 1;
+  overflow-y: auto;
+  padding: 16px;
+  background: rgba(247, 247, 253, 0.6);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.chat-fab-welcome {
+  text-align: center;
+  padding: 20px 12px 8px;
+}
+
+.chat-fab-welcome-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: #eef0ff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 8px;
+  font-size: 1.3rem;
+  color: #4f46e5;
+}
+
+.chat-fab-welcome h3 {
+  font-weight: 700;
+  font-size: 1.05rem;
+  margin-bottom: 4px;
+}
+
+.chat-fab-welcome p {
+  color: #6c757d;
+  font-size: 0.82rem;
+}
+
+.chat-fab-msg-row {
+  display: flex;
+  flex-direction: column;
+  max-width: 80%;
+}
+
+.chat-fab-msg-row.bot { align-self: flex-start; }
+.chat-fab-msg-row.user { align-self: flex-end; align-items: flex-end; }
+
+.chat-fab-bubble {
+  padding: 9px 13px;
+  border-radius: 12px;
+  font-size: 0.85rem;
+  line-height: 1.4;
+  white-space: pre-wrap;
+}
+
+.chat-fab-msg-row.bot .chat-fab-bubble {
+  background: #fff;
+  border: 1px solid #ece9fb;
+  border-top-left-radius: 4px;
+}
+
+.chat-fab-msg-row.user .chat-fab-bubble {
+  background: #4f46e5;
+  color: #fff;
+  border-top-right-radius: 4px;
+}
+
+.chat-fab-time {
+  font-size: 0.65rem;
+  color: #9691b5;
+  margin-top: 3px;
+  padding: 0 4px;
+}
+
+.chat-fab-typing {
+  background: #fff;
+  border: 1px solid #ece9fb;
+  border-radius: 12px;
+  border-top-left-radius: 4px;
+  padding: 10px 14px;
+  display: inline-flex;
+  gap: 4px;
+}
+
+.chat-fab-typing span {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #b3aed6;
+  animation: chatFabBounce 1.2s infinite ease-in-out;
+}
+
+.chat-fab-typing span:nth-child(2) { animation-delay: 0.15s; }
+.chat-fab-typing span:nth-child(3) { animation-delay: 0.3s; }
+
+@keyframes chatFabBounce {
+  0%, 60%, 100% { transform: translateY(0); opacity: 0.5; }
+  30% { transform: translateY(-3px); opacity: 1; }
+}
+
+.chat-fab-quick-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 10px 14px;
+  background: rgba(255,255,255,0.7);
+  border-top: 1px solid rgba(0,0,0,0.05);
+  flex-shrink: 0;
+}
+
+.chat-fab-quick-btn {
+  border: 1px solid #dcdfe6;
+  background: #fff;
+  color: #4f46e5;
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 5px 11px;
+  border-radius: 14px;
+  cursor: pointer;
+}
+
+.chat-fab-quick-btn:hover {
+  background: #4f46e5;
+  color: #fff;
+  border-color: #4f46e5;
+}
+
+.chat-fab-input-bar {
+  display: flex;
+  gap: 8px;
+  padding: 12px 14px;
+  background: #fff;
+  border-top: 1px solid #ece9fb;
+  flex-shrink: 0;
+}
+
+.chat-fab-input-bar input {
+  flex-grow: 1;
+  border: 1px solid #dcdfe6;
+  border-radius: 20px;
+  padding: 9px 16px;
+  font-size: 0.85rem;
+}
+
+.chat-fab-input-bar input:focus {
+  outline: none;
+  border-color: #4f46e5;
+  box-shadow: 0 0 0 0.15rem rgba(79, 70, 229, 0.15);
+}
+
+.chat-fab-input-bar button {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: #4f46e5;
+  color: #fff;
+  border: none;
+  flex-shrink: 0;
+}
+
+.chat-fab-input-bar button:hover {
+  background: #3730a3;
+}
+
+@media (max-width: 480px) {
+  .chat-fab-window {
+    width: calc(100vw - 24px);
+    height: calc(100vh - 100px);
+    right: 12px;
+    bottom: 90px;
+  }
+  .chat-fab {
+    right: 16px;
+    bottom: 16px;
+  }
+}
+
+body.dark-mode .chat-fab-window {
+  background: rgba(30, 28, 43, 0.85);
+  border-color: rgba(255,255,255,0.08);
+}
+body.dark-mode .chat-fab-body {
+  background: rgba(20, 18, 31, 0.5);
+}
+body.dark-mode .chat-fab-msg-row.bot .chat-fab-bubble {
+  background: #26233a;
+  border-color: #322e4a;
+  color: #d8d6e6;
+}
+body.dark-mode .chat-fab-quick-actions,
+body.dark-mode .chat-fab-input-bar {
+  background: #1e1c2b;
+  border-color: #2e2a44;
+}
+body.dark-mode .chat-fab-input-bar input {
+  background: #26233a;
+  border-color: #322e4a;
+  color: #d8d6e6;
+}

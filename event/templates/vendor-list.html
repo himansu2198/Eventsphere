@@ -3,6 +3,7 @@
 
 {% block title %}Vendors{% endblock %}
 
+
 {% block content %}
   <div class="content-card">
     {% if messages %}
@@ -17,15 +18,10 @@
         <p class="page-subtitle">Manage external suppliers, catering, and logistics partners.</p>
       </div>
       <div class="header-actions">
-        <div class="view-toggle-group">
-          <button type="button" id="gridViewBtn" class="active"><i class="bi bi-grid-fill me-1"></i>Grid</button>
-          <button type="button" id="tableViewBtn"><i class="bi bi-list-ul me-1"></i>Table</button>
-        </div>
         <a href="{% url 'create_vendor' %}" class="btn-dark-pill"><i class="bi bi-plus-lg"></i>Onboard New Vendor</a>
       </div>
     </div>
 
-    <!-- Grid view -->
     <div id="gridView" class="card-grid">
       {% for v in vendors %}
       <div class="grid-card">
@@ -68,7 +64,6 @@
       {% endfor %}
     </div>
 
-    <!-- Table view (hidden by default) -->
     <table class="table d-none" id="tableViewTable">
       <thead>
         <tr><th>Name</th><th>Contact</th><th>Service</th><th>Event</th><th>Contract Status</th><th>Actions</th></tr>
@@ -105,18 +100,20 @@
     const gridView = document.getElementById('gridView');
     const tableView = document.getElementById('tableViewTable');
 
-    gridBtn.addEventListener('click', () => {
-      gridBtn.classList.add('active');
-      tableBtn.classList.remove('active');
-      gridView.classList.remove('d-none');
-      tableView.classList.add('d-none');
-    });
+    if (gridBtn && tableBtn) {
+      gridBtn.addEventListener('click', () => {
+        gridBtn.classList.add('active');
+        tableBtn.classList.remove('active');
+        gridView.classList.remove('d-none');
+        tableView.classList.add('d-none');
+      });
 
-    tableBtn.addEventListener('click', () => {
-      tableBtn.classList.add('active');
-      gridBtn.classList.remove('active');
-      tableView.classList.remove('d-none');
-      gridView.classList.add('d-none');
-    });
+      tableBtn.addEventListener('click', () => {
+        tableBtn.classList.add('active');
+        gridBtn.classList.remove('active');
+        tableView.classList.remove('d-none');
+        gridView.classList.add('d-none');
+      });
+    }
   </script>
 {% endblock %}

@@ -1,0 +1,80 @@
+{% extends 'admin_base.html' %}
+{% load static %}
+
+{% block title %}Contact{% endblock %}
+
+{% block content %}
+  {% if messages %}
+    {% for message in messages %}
+      <div class="alert {% if message.tags == 'error' %}alert-danger{% else %}alert-success{% endif %}">
+        <i class="bi bi-check-circle-fill me-2"></i>
+        {% if message.tags != 'error' %}
+          <strong>Your message has been sent successfully.</strong> Our team will get back to you soon.
+        {% else %}
+          {{ message }}
+        {% endif %}
+      </div>
+    {% endfor %}
+  {% endif %}
+
+  <div class="content-card">
+    <h2 class="mb-4">Contact Us</h2>
+    <div class="row g-4 align-items-stretch">
+      <div class="col-md-6">
+        <div class="card-info-box" style="display:flex; flex-direction:column; justify-content:center; gap:18px; height:100%;">
+          <h4 class="mb-1">Get in Touch</h4>
+          <p class="text-muted mb-2" style="font-size:0.85rem;">Have a question? Reach out through any of these channels.</p>
+
+          <div style="display:flex; align-items:flex-start; gap:12px;">
+            <div style="width:38px; height:38px; border-radius:10px; background:#eef0ff; display:flex; align-items:center; justify-content:center; flex-shrink:0; font-size:1.05rem; color:#4f46e5;"><i class="bi bi-envelope-fill"></i></div>
+            <div>
+              <div class="info-label mb-0">Email</div>
+              <div class="info-value">support@eventsphere.com</div>
+            </div>
+          </div>
+
+          <div style="display:flex; align-items:flex-start; gap:12px;">
+            <div style="width:38px; height:38px; border-radius:10px; background:#eef0ff; display:flex; align-items:center; justify-content:center; flex-shrink:0; font-size:1.05rem; color:#4f46e5;"><i class="bi bi-telephone-fill"></i></div>
+            <div>
+              <div class="info-label mb-0">Phone</div>
+              <div class="info-value">+91 98765 43210</div>
+            </div>
+          </div>
+
+          <div style="display:flex; align-items:flex-start; gap:12px;">
+            <div style="width:38px; height:38px; border-radius:10px; background:#eef0ff; display:flex; align-items:center; justify-content:center; flex-shrink:0; font-size:1.05rem; color:#4f46e5;"><i class="bi bi-clock-fill"></i></div>
+            <div>
+              <div class="info-label mb-0">Response Time</div>
+              <div class="info-value" style="font-weight:400; font-size:0.85rem;">We usually respond within 24 hours on working days.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-md-6">
+        <div style="display:flex; flex-direction:column; justify-content:center; height:100%;">
+          <form method="post">
+            {% csrf_token %}
+            <div class="mb-3">
+              <label class="form-label">Name</label>
+              <input type="text" name="name" class="form-control" value="{{ user.get_full_name|default:user.username }}" required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Email</label>
+              <input type="email" name="email" class="form-control" value="{{ user.email }}" required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Subject</label>
+              <input type="text" name="subject" class="form-control" placeholder="What is this regarding?">
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Message</label>
+              <textarea name="message" class="form-control" rows="5" required></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary w-100">Send Message</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}

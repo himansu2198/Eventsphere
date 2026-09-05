@@ -1,0 +1,58 @@
+{% extends 'admin_base.html' %}
+{% load static %}
+
+{% block title %}Inquiry Detail{% endblock %}
+
+{% block extra_head %}
+<style>
+  .reply-box-admin {
+    background: #eef0ff;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+  <div class="content-card" style="max-width:750px; margin:0 auto;">
+    <a href="{% url 'contact_message_list' %}" class="text-muted" style="text-decoration:none; font-size:0.85rem;"><i class="bi bi-arrow-left"></i> Back to Inquiries</a>
+
+    <div class="d-flex justify-content-between align-items-start mt-3 mb-3">
+      <div>
+        <h4 class="mb-1">{{ inquiry.subject|default:"No subject" }}</h4>
+        <div class="text-muted" style="font-size:0.85rem;">From {{ inquiry.name }} ({{ inquiry.email }})</div>
+      </div>
+      {% if inquiry.status == 'resolved' %}
+        <span class="status-badge-pill status-completed">Resolved</span>
+      {% elif inquiry.status == 'read' %}
+        <span class="status-badge-pill status-upcoming">Read</span>
+      {% else %}
+        <span class="status-badge-pill status-pending">New</span>
+      {% endif %}
+    </div>
+
+    <div class="card-info-box mb-3">
+      <div class="info-label">Original Message — {{ inquiry.submitted_at|date:"d M Y, h:i A" }}</div>
+      <div class="info-value" style="font-weight:400; white-space:pre-wrap; margin-top:6px;">{{ inquiry.message }}</div>
+    </div>
+
+    {% for r in replies %}
+      <div class="card-info-box mb-2 {% if r.is_admin_reply %}reply-box-admin{% endif %}">
+        <div class="info-label">{% if r.is_admin_reply %}Admin{% else %}{{ inquiry.name }}{% endif %} — {{ r.created_at|date:"d M Y, h:i A" }}</div>
+        <div class="info-value" style="font-weight:400; white-space:pre-wrap; margin-top:4px;">{{ r.message }}</div>
+      </div>
+    {% endfor %}
+
+    <hr>
+
+    <form method="post">
+      {% csrf_token %}
+      <label class="form-label">Reply to {{ inquiry.name }}</label>
+      <textarea name="reply" class="form-control mb-2" rows="4" placeholder="Type your reply..." required></textarea>
+      <div class="d-flex gap-2">
+        <button type="submit" class="btn btn-primary">Send Reply</button>
+        {% if inquiry.status != 'resolved' %}
+          <a href="{% url 'mark_contact_reviewed' inquiry.pk %}" class="btn btn-secondary">Mark as Resolved</a>
+        {% endif %}
+      </div>
+    </form>
+  </div>
+{% endblock %}

@@ -1,0 +1,30 @@
+{% extends 'participant_base.html' %}
+{% load static %}
+
+{% block title %}My Inquiries{% endblock %}
+
+{% block content %}
+  <div class="content-card">
+    <h2 class="mb-4">My Inquiries</h2>
+    {% if inquiries %}
+      {% for inq in inquiries %}
+      <a href="{% url 'participant_inquiry_detail' inq.pk %}" class="grid-card mb-2" style="display:block; text-decoration:none; color:inherit;">
+        <div class="d-flex justify-content-between">
+          <h4 class="mb-1">{{ inq.subject|default:"No subject" }}</h4>
+          {% if inq.status == 'resolved' %}
+            <span class="status-badge-pill status-completed">Resolved</span>
+          {% else %}
+            <span class="status-badge-pill status-active">In Progress</span>
+          {% endif %}
+        </div>
+        <div class="text-muted" style="font-size:0.82rem;">{{ inq.submitted_at|date:"d M Y" }}</div>
+      </a>
+      {% endfor %}
+    {% else %}
+      <div class="empty-state">
+        <i class="bi bi-envelope"></i>
+        <p class="mb-0">No inquiries yet. Use the Contact page to reach out.</p>
+      </div>
+    {% endif %}
+  </div>
+{% endblock %}

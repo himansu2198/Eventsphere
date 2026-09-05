@@ -22,20 +22,19 @@
     </div>
 
     {% if sponsors %}
-    <div class="card-grid">
+    <div class="sponsor-card-grid">
       {% for s in sponsors %}
-      <div class="grid-card">
-        <div class="card-top-row">
-          {% if s.logo %}
-            <img src="{{ s.logo.url }}" alt="{{ s.name }}"
-                 style="width:56px; height:56px; object-fit:contain; border-radius:8px; background:#f7f7fd; padding:6px;"
-                 onerror="this.onerror=null; this.style.display='none';">
-          {% else %}
-            <div style="width:56px; height:56px; border-radius:8px; background:#eef0ff; display:flex; align-items:center; justify-content:center;">
-              <i class="bi bi-award-fill" style="color:#4f46e5; font-size:1.4rem;"></i>
-            </div>
-          {% endif %}
-        </div>
+      <div class="grid-card sponsor-grid-card">
+        {% if s.logo %}
+          <div class="sponsor-card-banner">
+            <img src="{{ s.logo.url }}" alt="{{ s.name }}" onerror="this.onerror=null; this.parentElement.classList.add('placeholder'); this.remove();">
+          </div>
+        {% else %}
+          <div class="sponsor-card-banner placeholder">
+            <i class="bi bi-award-fill"></i>
+          </div>
+        {% endif %}
+
         <h4>{{ s.name }}</h4>
         {% if s.contact_person %}
           <div class="card-meta-line"><i class="bi bi-person-fill"></i>{{ s.contact_person }}</div>

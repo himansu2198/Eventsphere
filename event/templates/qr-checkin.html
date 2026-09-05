@@ -8,40 +8,52 @@
     <div class="page-header-row">
       <div>
         <h2>QR Ticket Check-in</h2>
-        <p class="page-subtitle">Verify attendee entry or exit using their QR ticket code.</p>
+        <p class="page-subtitle">Verify attendee entry or exit using their unique ticket code.</p>
       </div>
     </div>
 
-    {% if result %}
-      <div class="alert alert-success">{{ result }}</div>
-    {% endif %}
+    <div id="checkinResultAlert">
+      {% if result %}
+        <div class="alert {% if checked_in_member %}alert-success{% else %}alert-danger{% endif %}">{{ result }}</div>
+      {% endif %}
+    </div>
 
-    {% if checked_in_member %}
-    <div class="grid-card mb-3" style="border-left:4px solid #23a35a;">
-      <div class="card-top-row">
-        <span class="category-pill"><i class="bi bi-check-circle-fill me-1"></i>Verified</span>
-      </div>
-      <h4>{{ checked_in_member.name }}</h4>
-      <div class="card-info-box">
-        <div class="row g-2">
-          <div class="col-6"><div class="info-label">Email</div><div class="info-value" style="font-size:0.82rem;">{{ checked_in_member.email }}</div></div>
-          <div class="col-6"><div class="info-label">Phone</div><div class="info-value">{{ checked_in_member.phone|default:"-" }}</div></div>
-          <div class="col-6"><div class="info-label">Role</div><div class="info-value text-capitalize">{{ checked_in_member.get_role_display }}</div></div>
-          <div class="col-6"><div class="info-label">Department</div><div class="info-value">{{ checked_in_member.department|default:"-" }}</div></div>
-          <div class="col-6"><div class="info-label">Event</div><div class="info-value">{{ checked_in_member.event.name }}</div></div>
-          <div class="col-6"><div class="info-label">Registration Status</div><div class="info-value text-capitalize">{{ checked_in_member.get_registration_status_display }}</div></div>
+    <div id="checkedInDetailWrapper">
+      {% if checked_in_member %}
+      <div class="grid-card mb-3" style="border-left:4px solid #23a35a;">
+        <div class="card-top-row">
+          <span class="category-pill"><i class="bi bi-check-circle-fill me-1"></i>Verified</span>
+        </div>
+        <h4>{{ checked_in_member.name }}</h4>
+        <div class="card-info-box">
+          <div class="row g-2">
+            <div class="col-6"><div class="info-label">Ticket Code</div><div class="info-value">{{ checked_in_member.ticket_code }}</div></div>
+            <div class="col-6"><div class="info-label">Email</div><div class="info-value" style="font-size:0.82rem;">{{ checked_in_member.email }}</div></div>
+            <div class="col-6"><div class="info-label">Role</div><div class="info-value text-capitalize">{{ checked_in_member.get_role_display }}</div></div>
+            <div class="col-6"><div class="info-label">Department</div><div class="info-value">{{ checked_in_member.department|default:"-" }}</div></div>
+            <div class="col-6"><div class="info-label">Event</div><div class="info-value">{{ checked_in_member.event.name }}</div></div>
+            <div class="col-6"><div class="info-label">Registration Status</div><div class="info-value text-capitalize">{{ checked_in_member.get_registration_status_display }}</div></div>
+          </div>
         </div>
       </div>
+      {% endif %}
     </div>
-    {% endif %}
 
     <div class="row g-3">
       <div class="col-lg-5">
         <div class="grid-card h-100">
           <h4 class="mb-3"><i class="bi bi-qr-code-scan me-2"></i>Verify Attendee</h4>
 
+          {% if not selected_event_id %}
+          <div class="alert alert-warning" style="font-size:0.85rem;">
+            <i class="bi bi-exclamation-triangle-fill me-1"></i>
+            Please select an event from the "Filter by Event" panel before checking in a participant.
+          </div>
+          {% endif %}
+
           <form method="post" id="checkinForm">
             {% csrf_token %}
+            <input type="hidden" name="event_id" id="checkinEventId" value="{{ selected_event_id|default:'' }}">
 
             <label class="form-label fw-bold">Mode</label>
             <div class="view-toggle-group mb-3" style="width:100%;">
@@ -52,18 +64,20 @@
 
             <div class="mb-3">
               <label class="form-label fw-bold">Ticket Code</label>
-              <input type="text" name="code" id="manualCode" class="form-control" placeholder="MEMBER-123" autocomplete="off" autofocus>
-              <div class="text-muted" style="font-size:0.78rem; margin-top:4px;">Type the code from the participant's ticket, or use the camera scanner below.</div>
+              <input type="text" name="code" id="manualCode" class="form-control text-uppercase"
+                     placeholder="e.g. MEMBER-7X92K4" autocomplete="off" autofocus style="letter-spacing:0.05em; font-weight:700;"
+                     {% if not selected_event_id %}disabled{% endif %}>
+              <div class="text-muted" style="font-size:0.78rem; margin-top:4px;">Enter the participant's unique ticket code shown on their QR ticket.</div>
             </div>
 
-            <button type="submit" class="btn btn-primary w-100 mb-3" id="checkinSubmitBtn">Check In</button>
+            <button type="submit" class="btn btn-primary w-100 mb-3" id="checkinSubmitBtn" {% if not selected_event_id %}disabled{% endif %}>Check In</button>
           </form>
 
           <hr>
 
           <div class="d-flex justify-content-between align-items-center mb-2">
             <span class="fw-bold" style="font-size:0.88rem;"><i class="bi bi-camera-fill me-1"></i>Camera Scanner</span>
-            <button type="button" id="toggleCameraBtn" class="btn btn-sm btn-outline-secondary">Enable Camera</button>
+            <button type="button" id="toggleCameraBtn" class="btn btn-sm btn-outline-secondary" {% if not selected_event_id %}disabled{% endif %}>Enable Camera</button>
           </div>
           <div id="qr-reader" style="width:100%; border-radius:10px; overflow:hidden; display:none; background:#1e1b2e;"></div>
           <div id="qr-reader-status" class="text-muted text-center mt-2" style="font-size:0.8rem;"></div>
@@ -73,23 +87,23 @@
       <div class="col-lg-3">
         <div class="grid-card h-100">
           <h4 class="mb-3"><i class="bi bi-funnel-fill me-2"></i>Filter by Event</h4>
-          <div class="d-flex flex-column gap-2">
+          <div class="d-flex flex-column gap-2" id="eventFilterList">
             {% if not selected_event_id %}
               <a href="{% url 'qr_checkin' %}" class="btn-dark-pill justify-content-between">All Events</a>
             {% else %}
-              <a href="{% url 'qr_checkin' %}" class="btn-dark-pill justify-content-between" style="background:#fff; color:#1e2430; border:1px solid #e0e4eb;">All Events</a>
+              <a href="{% url 'qr_checkin' %}" class="btn-dark-pill filter-unselected justify-content-between">All Events</a>
             {% endif %}
 
             {% for ev in events_with_counts %}
               {% if selected_event_id == ev.id %}
                 <a href="?event={{ ev.id }}" class="btn-dark-pill justify-content-between">
                   <span>{{ ev.name }}</span>
-                  <span class="badge" style="background:rgba(255,255,255,0.25); color:#fff;">{{ ev.verified_count }}</span>
+                  <span class="badge" id="event-count-{{ ev.id }}" style="background:rgba(255,255,255,0.25); color:#fff;">{{ ev.verified_count }}</span>
                 </a>
               {% else %}
-                <a href="?event={{ ev.id }}" class="btn-dark-pill justify-content-between" style="background:#fff; color:#1e2430; border:1px solid #e0e4eb;">
+                <a href="?event={{ ev.id }}" class="btn-dark-pill filter-unselected justify-content-between">
                   <span>{{ ev.name }}</span>
-                  <span class="badge" style="background:#eef0ff; color:#4f46e5;">{{ ev.verified_count }}</span>
+                  <span class="badge" id="event-count-{{ ev.id }}" style="background:#eef0ff; color:#4f46e5;">{{ ev.verified_count }}</span>
                 </a>
               {% endif %}
             {% endfor %}
@@ -100,39 +114,38 @@
       <div class="col-lg-4">
         <div class="grid-card h-100">
           <h4 class="mb-3"><i class="bi bi-clock-history me-2"></i>Verified Attendees{% if selected_event_id %} — Filtered{% endif %}</h4>
-          {% if recent_checkins %}
-            <div class="table-responsive">
-              <table class="table align-middle">
-                <thead>
-                  <tr><th>Name</th><th>Role</th><th>Status</th><th>Time</th></tr>
-                </thead>
-                <tbody>
-                  {% for c in recent_checkins %}
-                  <tr>
-                    <td>
-                      {{ c.member.name }}
-                      <div class="text-muted" style="font-size:0.72rem;">{{ c.member.event.name }}</div>
-                    </td>
-                    <td><span class="status-badge-pill status-upcoming text-capitalize">{{ c.member.get_role_display }}</span></td>
-                    <td>
-                      {% if c.checked_out_at %}
-                        <span class="status-badge-pill status-completed">Left</span>
-                      {% else %}
-                        <span class="status-badge-pill status-active">In Venue</span>
-                      {% endif %}
-                    </td>
-                    <td>{{ c.marked_at|date:"h:i A" }}</td>
-                  </tr>
-                  {% endfor %}
-                </tbody>
-              </table>
-            </div>
-          {% else %}
-            <div class="empty-state">
-              <i class="bi bi-clipboard-check"></i>
-              <p class="mb-0">No check-ins recorded yet.</p>
-            </div>
-          {% endif %}
+
+          <div id="verifiedAttendeesEmpty" class="empty-state" {% if recent_checkins %}style="display:none;"{% endif %}>
+            <i class="bi bi-clipboard-check"></i>
+            <p class="mb-0">No attendees verified yet.</p>
+          </div>
+
+          <div class="table-responsive" id="verifiedAttendeesTableWrapper" {% if not recent_checkins %}style="display:none;"{% endif %}>
+            <table class="table align-middle">
+              <thead>
+                <tr><th>Name</th><th>Role</th><th>Status</th><th>Time</th></tr>
+              </thead>
+              <tbody id="verifiedAttendeesBody">
+                {% for c in recent_checkins %}
+                <tr>
+                  <td>
+                    {{ c.member.name }}
+                    <div class="text-muted" style="font-size:0.72rem;">{{ c.member.event.name }}</div>
+                  </td>
+                  <td><span class="status-badge-pill status-upcoming text-capitalize">{{ c.member.get_role_display }}</span></td>
+                  <td>
+                    {% if c.checked_out_at %}
+                      <span class="status-badge-pill status-completed">Left</span>
+                    {% else %}
+                      <span class="status-badge-pill status-active">In Venue</span>
+                    {% endif %}
+                  </td>
+                  <td>{{ c.marked_at|date:"h:i A" }}</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     </div>
@@ -146,6 +159,7 @@
     const exitBtn = document.getElementById('exitModeBtn');
     const modeInput = document.getElementById('modeInput');
     const submitBtn = document.getElementById('checkinSubmitBtn');
+    const eventIdInput = document.getElementById('checkinEventId');
 
     entryBtn.addEventListener('click', () => {
       entryBtn.classList.add('active');
@@ -160,25 +174,108 @@
       submitBtn.textContent = 'Check Out';
     });
 
+    const checkinForm = document.getElementById('checkinForm');
+    const manualCodeInput = document.getElementById('manualCode');
+    const resultAlertDiv = document.getElementById('checkinResultAlert');
+    const detailWrapper = document.getElementById('checkedInDetailWrapper');
+    const verifiedBody = document.getElementById('verifiedAttendeesBody');
+    const verifiedEmpty = document.getElementById('verifiedAttendeesEmpty');
+    const verifiedTableWrapper = document.getElementById('verifiedAttendeesTableWrapper');
+
+    function submitTicketCode(code) {
+      const formData = new FormData();
+      formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+      formData.append('code', code);
+      formData.append('mode', modeInput.value);
+      formData.append('event_id', eventIdInput.value);
+
+      submitBtn.disabled = true;
+
+      fetch(window.location.pathname, {
+        method: 'POST',
+        headers: { 'X-Requested-With': 'XMLHttpRequest' },
+        body: formData,
+      })
+      .then(res => res.json())
+      .then(data => {
+        submitBtn.disabled = false;
+        manualCodeInput.value = '';
+        manualCodeInput.focus();
+
+        resultAlertDiv.innerHTML = `<div class="alert ${data.success ? 'alert-success' : 'alert-danger'}">${data.message}</div>`;
+
+        if (data.success && data.attendee) {
+          const a = data.attendee;
+
+          detailWrapper.innerHTML = `
+            <div class="grid-card mb-3" style="border-left:4px solid #23a35a;">
+              <div class="card-top-row">
+                <span class="category-pill"><i class="bi bi-check-circle-fill me-1"></i>Verified</span>
+              </div>
+              <h4>${a.name}</h4>
+              <div class="card-info-box">
+                <div class="row g-2">
+                  <div class="col-6"><div class="info-label">Ticket Code</div><div class="info-value">${a.ticket_code}</div></div>
+                  <div class="col-6"><div class="info-label">Email</div><div class="info-value" style="font-size:0.82rem;">${a.email}</div></div>
+                  <div class="col-6"><div class="info-label">Role</div><div class="info-value">${a.role}</div></div>
+                  <div class="col-6"><div class="info-label">Department</div><div class="info-value">${a.department}</div></div>
+                  <div class="col-6"><div class="info-label">Event</div><div class="info-value">${a.event}</div></div>
+                  <div class="col-6"><div class="info-label">Registration Status</div><div class="info-value">${a.registration_status}</div></div>
+                </div>
+              </div>
+            </div>
+          `;
+
+          verifiedEmpty.style.display = 'none';
+          verifiedTableWrapper.style.display = '';
+
+          const statusBadge = a.in_venue
+            ? '<span class="status-badge-pill status-active">In Venue</span>'
+            : '<span class="status-badge-pill status-completed">Left</span>';
+
+          const newRow = document.createElement('tr');
+          newRow.innerHTML = `
+            <td>${a.name}<div class="text-muted" style="font-size:0.72rem;">${a.event}</div></td>
+            <td><span class="status-badge-pill status-upcoming">${a.role}</span></td>
+            <td>${statusBadge}</td>
+            <td>${a.time}</td>
+          `;
+          verifiedBody.insertBefore(newRow, verifiedBody.firstChild);
+
+          if (!a.was_exit) {
+            const countBadge = document.getElementById('event-count-' + a.event_id);
+            if (countBadge) {
+              countBadge.textContent = (parseInt(countBadge.textContent) || 0) + 1;
+            }
+          }
+        }
+      })
+      .catch(() => {
+        submitBtn.disabled = false;
+        resultAlertDiv.innerHTML = `<div class="alert alert-danger">Something went wrong. Please try again.</div>`;
+      });
+    }
+
+    checkinForm.addEventListener('submit', function (e) {
+      e.preventDefault();
+      const code = manualCodeInput.value.trim();
+      if (code) submitTicketCode(code);
+    });
+
+    // ---------- Camera Scanner (fully functional, same backend logic) ----------
     const toggleCameraBtn = document.getElementById('toggleCameraBtn');
     const qrReaderDiv = document.getElementById('qr-reader');
     const statusEl = document.getElementById('qr-reader-status');
-    const manualForm = document.getElementById('checkinForm');
-    const manualCodeInput = document.getElementById('manualCode');
 
     let html5QrCode = null;
     let cameraActive = false;
-
-    function submitScannedCode(decodedText) {
-      manualCodeInput.value = decodedText;
-      manualForm.submit();
-    }
+    let scannerBusy = false;
 
     toggleCameraBtn.addEventListener('click', () => {
       if (!cameraActive) {
         qrReaderDiv.style.display = 'block';
         toggleCameraBtn.textContent = 'Disable Camera';
-        statusEl.textContent = 'Starting camera…';
+        statusEl.textContent = 'Requesting camera permission…';
 
         html5QrCode = new Html5Qrcode("qr-reader");
         Html5Qrcode.getCameras().then(devices => {
@@ -187,14 +284,15 @@
               devices[0].id,
               { fps: 10, qrbox: { width: 220, height: 220 } },
               (decodedText) => {
-                html5QrCode.stop().then(() => {
-                  statusEl.textContent = 'Code scanned — submitting…';
-                  submitScannedCode(decodedText);
-                });
+                if (scannerBusy) return;
+                scannerBusy = true;
+                statusEl.textContent = 'Code detected — verifying…';
+                submitTicketCode(decodedText.trim());
+                setTimeout(() => { scannerBusy = false; }, 2000);
               },
               () => {}
             ).then(() => {
-              statusEl.textContent = 'Point the camera at a QR ticket.';
+              statusEl.textContent = 'Point the camera at a participant\'s QR ticket.';
             }).catch(() => {
               statusEl.textContent = 'Could not start camera.';
             });
@@ -202,7 +300,7 @@
             statusEl.textContent = 'No camera found on this device.';
           }
         }).catch(() => {
-          statusEl.textContent = 'Camera access denied.';
+          statusEl.textContent = 'Camera access denied. Please allow camera permission to scan.';
         });
 
         cameraActive = true;
