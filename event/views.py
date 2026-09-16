@@ -114,7 +114,7 @@ def participant_signup(request):
 
 # ---------- Dashboards ----------
 
-@login_required(login_url='/login/')
+@admin_required
 def dashboard(request):
     category_count = EventCategory.objects.count()
     event_count = Event.objects.count()

@@ -1536,11 +1536,26 @@ input[type="file"].form-control {
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: #f4f5f7;
+  background: linear-gradient(120deg, #423bc9 0%, #4f46e5 42%, #6f61f0 100%);
   font-family: 'Segoe UI', Arial, sans-serif;
   padding: 40px 20px;
   position: relative;
+  overflow: hidden;
 }
+
+.auth-page-wrapper::before,
+.auth-page-wrapper::after {
+  content: '';
+  position: absolute;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.06);
+  pointer-events: none;
+  z-index: 0;
+}
+.auth-page-wrapper::before { width: 420px; height: 420px; top: -140px; left: -140px; }
+.auth-page-wrapper::after { width: 300px; height: 300px; bottom: -120px; right: -80px; background: rgba(255, 255, 255, 0.05); }
+
+.auth-page-wrapper > * { position: relative; z-index: 1; }
 
 .auth-card {
   background: #fff;
@@ -2563,6 +2578,10 @@ body.dark-mode .global-search-result-item:hover {
    ================================ */
 
 .participant-topbar {
+  background: var(--navbar-bg, #ffffff);
+  border-radius: 8px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+  margin-bottom: 20px;
   height: 64px;
   padding: 0 24px;
   display: flex;

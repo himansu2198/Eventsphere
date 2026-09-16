@@ -3,87 +3,618 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Smart Event Planning Platform with Resource Coordination System </title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>EventSphere — Plan, Manage &amp; Attend Events</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
-  <link rel="stylesheet" href="{% static 'css/style.css' %}?v=6">
-</head>
-<body class="landing-body">
+  <style>
+    :root {
+      --accent: #4f46e5;
+      --accent-dark: #3730a3;
+      --ink: #1e1b2e;
+      --side-pad: clamp(24px, 6vw, 96px);
+    }
 
-  <div class="landing-hero-section">
-    <nav class="landing-nav">
-      <div class="brand"><i class="bi bi-calendar-event-fill me-2"></i>EventSphere</div>
-      <div class="nav-actions">
-        <a href="{% url 'participant_signup' %}" class="btn-outline">Sign Up</a>
-        <a href="{% url 'login' %}" class="btn-filled">Login</a>
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', Arial, sans-serif;
+      color: var(--ink);
+      background: #f7f7fb;
+      scroll-snap-type: y proximity;
+    }
+
+    a { text-decoration: none; }
+
+    .ls-view {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      scroll-snap-align: start;
+    }
+
+    /* ---------- View 1: Navbar + Hero + Features ---------- */
+    .ls-view-1 {
+      background: linear-gradient(120deg, #423bc9 0%, #4f46e5 42%, #6f61f0 100%);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .ls-view-1::before,
+    .ls-view-1::after {
+      content: '';
+      position: absolute;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.06);
+      pointer-events: none;
+    }
+    .ls-view-1::before { width: 520px; height: 520px; top: -180px; left: -180px; }
+    .ls-view-1::after { width: 360px; height: 360px; bottom: -140px; left: 6%; background: rgba(255,255,255,0.05); }
+
+    /* ---------- Navbar ---------- */
+    .ls-navbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 26px var(--side-pad);
+      position: relative;
+      z-index: 5;
+      flex-wrap: wrap;
+      gap: 14px;
+    }
+
+    .ls-brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: #fff;
+      font-size: 1.4rem;
+      font-weight: 700;
+    }
+
+    .ls-brand-icon {
+      width: 38px;
+      height: 38px;
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.16);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+    }
+
+    .ls-nav-actions { display: flex; gap: 12px; }
+
+    .ls-btn {
+      padding: 10px 24px;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 0.95rem;
+      border: 1.5px solid transparent;
+      transition: transform 0.15s ease, opacity 0.15s ease;
+      white-space: nowrap;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+
+    .ls-btn:hover { transform: translateY(-1px); }
+
+    .ls-btn-outline { border-color: rgba(255, 255, 255, 0.55); color: #fff; }
+    .ls-btn-outline:hover { background: rgba(255, 255, 255, 0.1); color: #fff; }
+
+    .ls-btn-solid { background: #fff; color: var(--accent); }
+    .ls-btn-solid:hover { opacity: 0.92; color: var(--accent); }
+
+    /* ---------- Hero ---------- */
+    .ls-hero-inner {
+      display: flex;
+      align-items: center;
+      gap: 60px;
+      max-width: 1600px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 30px var(--side-pad) 40px;
+      position: relative;
+      z-index: 2;
+      flex: 1;
+    }
+
+    .ls-hero-copy { flex: 1 1 540px; color: #fff; max-width: 640px; }
+
+    .ls-hero-copy h1 {
+      font-size: clamp(2.4rem, 3.4vw, 3.4rem);
+      font-weight: 800;
+      line-height: 1.15;
+      margin-bottom: 20px;
+    }
+
+    .ls-hero-copy p.lead-text {
+      font-size: 1.08rem;
+      line-height: 1.65;
+      color: rgba(255, 255, 255, 0.9);
+      margin-bottom: 8px;
+    }
+
+    .ls-badge-line {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(255, 255, 255, 0.14);
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      padding: 7px 16px;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: #fff;
+      margin-bottom: 24px;
+    }
+
+    .ls-hero-buttons {
+      display: flex;
+      gap: 16px;
+      margin: 30px 0 20px;
+      flex-wrap: wrap;
+    }
+
+    .ls-hero-buttons .ls-btn { padding: 14px 28px; font-size: 0.98rem; }
+
+    .ls-hero-tags {
+      font-size: 0.78rem;
+      letter-spacing: 0.12em;
+      font-weight: 700;
+      color: rgba(255, 255, 255, 0.65);
+      text-transform: uppercase;
+    }
+
+    /* ---------- Hero illustration ---------- */
+    .ls-hero-art {
+      flex: 1 1 480px;
+      position: relative;
+      height: 440px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .ls-hero-illustration {
+      width: 100%;
+      max-width: 560px;
+      height: 100%;
+      position: relative;
+      z-index: 2;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    .ls-hero-illustration img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      object-position: center;
+      display: block;
+      max-width: 100%;
+      max-height: 100%;
+      filter: drop-shadow(0 20px 40px rgba(20, 15, 70, 0.35));
+    }
+
+    .ls-hero-scribble {
+      position: absolute;
+      top: 2%;
+      right: -2%;
+      font-family: 'Segoe UI', Arial, sans-serif;
+      font-style: italic;
+      color: rgba(255, 255, 255, 0.55);
+      font-size: 1rem;
+      line-height: 1.35;
+      text-align: right;
+    }
+
+    .ls-hero-scribble-2 {
+      position: absolute;
+      bottom: 2%;
+      left: -6%;
+      font-family: 'Segoe UI', Arial, sans-serif;
+      font-style: italic;
+      color: rgba(255, 255, 255, 0.4);
+      font-size: 0.95rem;
+      line-height: 1.35;
+      text-align: left;
+    }
+
+    /* ---------- Features (bottom of View 1) ---------- */
+    .ls-features {
+      background: rgba(255, 255, 255, 0.98);
+      padding: 44px var(--side-pad) 56px;
+      position: relative;
+      z-index: 2;
+    }
+
+    .ls-features-grid {
+      max-width: 1600px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 26px;
+    }
+
+    .ls-feature-card {
+      border: 1px solid #ece9fb;
+      border-radius: 16px;
+      padding: 30px 24px;
+      text-align: center;
+      transition: box-shadow 0.2s ease, transform 0.2s ease;
+      background: #fff;
+    }
+
+    .ls-feature-card:hover {
+      box-shadow: 0 14px 34px rgba(79, 70, 229, 0.14);
+      transform: translateY(-4px);
+    }
+
+    .ls-feature-icon {
+      width: 58px;
+      height: 58px;
+      border-radius: 14px;
+      background: #eef0ff;
+      color: var(--accent);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.55rem;
+      margin: 0 auto 18px;
+    }
+
+    .ls-feature-card h4 { font-size: 1.08rem; font-weight: 700; margin-bottom: 10px; }
+    .ls-feature-card p { font-size: 0.9rem; color: #6c757d; line-height: 1.6; margin: 0; }
+
+    /* ---------- View 2: Role selection + Footer ---------- */
+    .ls-view-2 {
+      background: linear-gradient(135deg, #24205c 0%, #423bc9 55%, #4f46e5 100%);
+      color: #fff;
+    }
+
+    .ls-roles {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      padding: 60px var(--side-pad);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .ls-roles h2 {
+      font-size: clamp(1.9rem, 2.6vw, 2.5rem);
+      font-weight: 800;
+      margin-bottom: 10px;
+      position: relative;
+      z-index: 3;
+    }
+    .ls-roles > p.ls-roles-sub {
+      color: rgba(255, 255, 255, 0.78);
+      margin-bottom: 48px;
+      font-size: 1rem;
+      position: relative;
+      z-index: 3;
+    }
+
+    /* Decorative crowd silhouettes — behind everything, clipped to the outer edges only */
+    .ls-crowd {
+      position: absolute;
+      bottom: 0;
+      width: 260px;
+      max-width: 22vw;
+      opacity: 0.85;
+      z-index: 1;
+      pointer-events: none;
+    }
+    .ls-crowd svg { width: 100%; display: block; }
+    .ls-crowd.crowd-left { left: 0; }
+    .ls-crowd.crowd-right { right: 0; }
+
+    /* Decorative scribble captions — sit above the crowd art but stay in the side margins */
+    .ls-roles-scribble {
+      position: absolute;
+      z-index: 1;
+      font-style: italic;
+      font-size: 0.9rem;
+      line-height: 1.4;
+      color: rgba(255, 255, 255, 0.55);
+      max-width: 150px;
+      pointer-events: none;
+    }
+    .ls-roles-scribble.scribble-left { left: 2%; top: 8%; text-align: left; }
+    .ls-roles-scribble.scribble-right { right: 2%; top: 8%; text-align: right; }
+
+    /* Decorative curved arrows */
+    .ls-roles-arrow {
+      position: absolute;
+      z-index: 1;
+      width: 90px;
+      opacity: 0.5;
+      pointer-events: none;
+    }
+    .ls-roles-arrow svg { width: 100%; display: block; }
+    .ls-roles-arrow.arrow-left { left: 3%; top: 26%; }
+    .ls-roles-arrow.arrow-right { right: 4%; top: 46%; transform: scaleX(-1); }
+
+    /* ---------- Centered role-card group ---------- */
+    .ls-role-grid {
+      display: flex;
+      justify-content: center;
+      align-items: stretch;
+      gap: 40px;
+      flex-wrap: wrap;
+      width: 100%;
+      max-width: 900px;
+      margin: 0 auto;
+      position: relative;
+      z-index: 3;
+    }
+
+    .ls-role-card {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      border-radius: 18px;
+      padding: 40px 34px;
+      text-align: left;
+      width: 100%;
+      max-width: 400px;
+      flex: 1 1 380px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .ls-role-icon {
+      width: 52px;
+      height: 52px;
+      border-radius: 13px;
+      background: rgba(255, 255, 255, 0.15);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.45rem;
+      margin-bottom: 18px;
+    }
+
+    .ls-role-card h5 { font-size: 1.3rem; font-weight: 700; margin-bottom: 16px; }
+
+    .ls-role-card ul { list-style: none; padding: 0; margin: 0 0 26px; }
+
+    .ls-role-card li {
+      font-size: 0.92rem;
+      color: rgba(255, 255, 255, 0.85);
+      padding: 7px 0 7px 24px;
+      position: relative;
+    }
+
+    .ls-role-card li::before {
+      content: '\F26E';
+      font-family: 'bootstrap-icons';
+      position: absolute;
+      left: 0;
+      top: 7px;
+      color: #a5a0f5;
+      font-size: 0.9rem;
+    }
+
+    .ls-role-card .ls-btn { width: 100%; text-align: center; margin-top: auto; }
+
+    /* ---------- Footer ---------- */
+    .ls-footer {
+      background: #14121f;
+      color: rgba(255, 255, 255, 0.6);
+      padding: 22px var(--side-pad);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 10px;
+      font-size: 0.84rem;
+      position: relative;
+      z-index: 4;
+    }
+
+    .ls-footer-links { display: flex; gap: 22px; }
+    .ls-footer-links a { color: rgba(255, 255, 255, 0.6); }
+    .ls-footer-links a:hover { color: #fff; }
+
+    /* ---------- Responsive ---------- */
+    @media (max-width: 1100px) {
+      .ls-features-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    @media (max-width: 992px) {
+      .ls-hero-inner { flex-direction: column; text-align: left; padding-top: 10px; }
+      .ls-hero-art { margin-top: 30px; height: 380px; }
+      .ls-view-1 { min-height: auto; }
+      .ls-role-grid { flex-direction: column; align-items: center; }
+      .ls-role-card { max-width: 460px; }
+      .ls-roles { padding: 50px var(--side-pad); }
+
+      /* Hide side decorations below tablet width — guarantees zero overlap with cards */
+      .ls-crowd, .ls-roles-scribble, .ls-roles-arrow { display: none; }
+    }
+
+    @media (max-width: 576px) {
+      .ls-features-grid { grid-template-columns: 1fr; }
+      .ls-hero-buttons { flex-direction: column; }
+      .ls-hero-buttons .ls-btn { width: 100%; }
+      .ls-footer { flex-direction: column; text-align: center; }
+      .ls-hero-art { height: 300px; }
+      .ls-hero-scribble, .ls-hero-scribble-2 { display: none; }
+      .ls-nav-actions { width: 100%; }
+      .ls-nav-actions .ls-btn { flex: 1; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="ls-view ls-view-1">
+    <nav class="ls-navbar">
+      <div class="ls-brand">
+        <span class="ls-brand-icon"><i class="bi bi-calendar-check-fill"></i></span>
+        EventSphere
+      </div>
+      <div class="ls-nav-actions">
+        <a href="{% url 'participant_signup' %}" class="ls-btn ls-btn-outline">Sign Up</a>
+        <a href="{% url 'login' %}" class="ls-btn ls-btn-solid">Login</a>
       </div>
     </nav>
 
-    <div class="landing-hero">
-      <h1>Plan, Manage &amp; Attend Events — All in One Place</h1>
-      <p>A complete Smart Event Planning & Resource Coordination for admins to create and manage events and for participants to discover, register, and get a QR ticket for check-in — built as part of the Infosys Springboard Training Program.</p>
-      <div class="hero-buttons">
-        <a href="{% url 'participant_signup' %}" class="primary">Get Started as Participant</a>
-        <a href="{% url 'login' %}" class="secondary">Login</a>
-      </div>
-    </div>
-  </div>
+    <div class="ls-hero-inner">
+      <div class="ls-hero-copy">
+        <span class="ls-badge-line"><i class="bi bi-mortarboard-fill"></i> Infosys Springboard Virtual Internship 7.0</span>
+        <h1>Plan, Manage &amp; Attend Events — All in One Place</h1>
+        <p class="lead-text">A complete Smart Event Planning &amp; Resource Coordination platform for admins to create and manage events and for participants to discover, register, and get a QR ticket for check-in — built as part of the Infosys Springboard Training Program.</p>
 
-  <div class="landing-features">
-    <div class="container" style="max-width: 1000px;">
-      <div class="row g-3">
-        <div class="col-md-3 col-6">
-          <div class="landing-feature-card">
-            <i class="bi bi-calendar-check-fill"></i>
-            <h5>Create Events</h5>
-            <p>Admins organize categories, events and schedules from a central dashboard.</p>
-          </div>
+        <div class="ls-hero-buttons">
+          <a href="{% url 'participant_signup' %}" class="ls-btn ls-btn-solid"><i class="bi bi-person-plus-fill"></i> Get Started as Participant</a>
+          <a href="{% url 'login' %}" class="ls-btn ls-btn-outline">Login</a>
         </div>
-        <div class="col-md-3 col-6">
-          <div class="landing-feature-card">
-            <i class="bi bi-qr-code"></i>
-            <h5>QR Ticketing</h5>
-            <p>Participants get a scannable QR ticket after registering for any event.</p>
-          </div>
-        </div>
-        <div class="col-md-3 col-6">
-          <div class="landing-feature-card">
-            <i class="bi bi-people-fill"></i>
-            <h5>Member Management</h5>
-            <p>Track participants, volunteers, organizers and judges per event.</p>
-          </div>
-        </div>
-        <div class="col-md-3 col-6">
-          <div class="landing-feature-card">
-            <i class="bi bi-clipboard-check-fill"></i>
-            <h5>Attendance Tracking</h5>
-            <p>Mark and monitor attendance in real time, right from check-in.</p>
-          </div>
+
+        <div class="ls-hero-tags">Events &nbsp;·&nbsp; People &nbsp;·&nbsp; Opportunities</div>
+      </div>
+
+      <div class="ls-hero-art">
+        <div class="ls-hero-illustration">
+          <img src="{% static 'img/eventsphere-hero-illustration.png' %}"
+               alt="EventSphere event planning illustration — organizer and participant with event calendar"
+               class="hero-illustration">
         </div>
       </div>
     </div>
+
+    <section class="ls-features">
+      <div class="ls-features-grid">
+        <div class="ls-feature-card">
+          <div class="ls-feature-icon"><i class="bi bi-calendar-event-fill"></i></div>
+          <h4>Create Events</h4>
+          <p>Admins organize categories, events and schedules from a central dashboard.</p>
+        </div>
+        <div class="ls-feature-card">
+          <div class="ls-feature-icon"><i class="bi bi-qr-code"></i></div>
+          <h4>QR Ticketing</h4>
+          <p>Participants get a scannable QR ticket after registering for an event.</p>
+        </div>
+        <div class="ls-feature-card">
+          <div class="ls-feature-icon"><i class="bi bi-people-fill"></i></div>
+          <h4>Member Management</h4>
+          <p>Track participants, volunteers, organizers and judges for each event.</p>
+        </div>
+        <div class="ls-feature-card">
+          <div class="ls-feature-icon"><i class="bi bi-clipboard2-check-fill"></i></div>
+          <h4>Attendance Tracking</h4>
+          <p>Mark and monitor attendance in real time through QR-based check-in.</p>
+        </div>
+      </div>
+    </section>
   </div>
 
-  <div class="landing-roles-section">
-    <h2>Choose Your Role</h2>
-    <div class="row g-4 justify-content-center">
-      <div class="col-md-4">
-        <div class="landing-role-card">
-          <i class="bi bi-person-badge-fill"></i>
+  <div class="ls-view ls-view-2">
+    <section class="ls-roles">
+
+      <!-- Decorative crowd silhouettes — left -->
+      <div class="ls-crowd crowd-left" aria-hidden="true">
+        <svg viewBox="0 0 260 220" xmlns="http://www.w3.org/2000/svg">
+          <g fill="rgba(255,255,255,0.14)">
+            <circle cx="40" cy="120" r="16"/>
+            <path d="M18 220 L18 165 Q40 140 62 165 L62 220 Z"/>
+            <circle cx="85" cy="105" r="18"/>
+            <path d="M60 220 L60 145 Q85 116 110 145 L110 220 Z"/>
+            <circle cx="130" cy="130" r="14"/>
+            <path d="M112 220 L112 172 Q130 150 148 172 L148 220 Z"/>
+          </g>
+        </svg>
+      </div>
+
+      <!-- Decorative crowd silhouettes — right -->
+      <div class="ls-crowd crowd-right" aria-hidden="true">
+        <svg viewBox="0 0 260 220" xmlns="http://www.w3.org/2000/svg">
+          <g fill="rgba(255,255,255,0.14)">
+            <circle cx="220" cy="118" r="16"/>
+            <path d="M198 220 L198 163 Q220 138 242 163 L242 220 Z"/>
+            <circle cx="175" cy="104" r="18"/>
+            <path d="M150 220 L150 144 Q175 115 200 144 L200 220 Z"/>
+            <circle cx="130" cy="128" r="14"/>
+            <path d="M112 220 L112 170 Q130 148 148 170 L148 220 Z"/>
+          </g>
+          <path d="M170 34 L214 34 L192 20 Z" fill="rgba(255,255,255,0.2)"/>
+          <rect x="188" y="34" width="8" height="20" fill="rgba(255,255,255,0.2)"/>
+          <g transform="translate(196,60)">
+            <path d="M0 6 L20 0 L40 6 L20 12 Z" fill="rgba(255,255,255,0.22)"/>
+            <rect x="17" y="6" width="6" height="14" fill="rgba(255,255,255,0.22)"/>
+            <circle cx="20" cy="20" r="3" fill="rgba(255,255,255,0.22)"/>
+          </g>
+          <circle cx="230" cy="60" r="5" fill="rgba(255,255,255,0.2)"/>
+          <circle cx="245" cy="80" r="4" fill="rgba(255,255,255,0.16)"/>
+        </svg>
+      </div>
+
+      <!-- Decorative curved arrows -->
+      <div class="ls-roles-arrow arrow-left" aria-hidden="true">
+        <svg viewBox="0 0 90 60" xmlns="http://www.w3.org/2000/svg">
+          <path d="M4 4 Q10 40 60 46" stroke="rgba(255,255,255,0.5)" stroke-width="2" fill="none" stroke-linecap="round"/>
+          <path d="M50 38 L62 47 L50 54" stroke="rgba(255,255,255,0.5)" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <div class="ls-roles-arrow arrow-right" aria-hidden="true">
+        <svg viewBox="0 0 90 60" xmlns="http://www.w3.org/2000/svg">
+          <path d="M4 4 Q10 40 60 46" stroke="rgba(255,255,255,0.5)" stroke-width="2" fill="none" stroke-linecap="round"/>
+          <path d="M50 38 L62 47 L50 54" stroke="rgba(255,255,255,0.5)" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+
+      <span class="ls-roles-scribble scribble-left">Learn<br>Connect<br>Participate</span>
+      <span class="ls-roles-scribble scribble-right">More<br>Than Events</span>
+
+      <h2>Choose Your Role</h2>
+      <p class="ls-roles-sub">Get started with EventSphere based on your role.</p>
+
+      <div class="ls-role-grid">
+        <div class="ls-role-card">
+          <div class="ls-role-icon"><i class="bi bi-person-badge-fill"></i></div>
           <h5>Admin</h5>
-          <p>Create categories, events, manage members and attendance.</p>
-          <a href="{% url 'login' %}">Admin Login</a>
+          <ul>
+            <li>Create and manage events</li>
+            <li>Manage categories, venues and resources</li>
+            <li>Manage participants and attendance</li>
+            <li>Manage budgets and sponsors</li>
+          </ul>
+          <a href="{% url 'login' %}" class="ls-btn ls-btn-solid">Admin Login</a>
         </div>
-      </div>
-      <div class="col-md-4">
-        <div class="landing-role-card">
-          <i class="bi bi-person-check-fill"></i>
+
+        <div class="ls-role-card">
+          <div class="ls-role-icon"><i class="bi bi-person-fill"></i></div>
           <h5>Participant</h5>
-          <p>Browse events, register, and get your QR ticket.</p>
-          <a href="{% url 'participant_signup' %}">Participant Signup</a>
+          <ul>
+            <li>Browse available events</li>
+            <li>Register for events</li>
+            <li>Access QR tickets</li>
+            <li>View registrations and attendance</li>
+          </ul>
+          <a href="{% url 'participant_signup' %}" class="ls-btn ls-btn-solid">Participant Signup</a>
         </div>
       </div>
-    </div>
+    </section>
+
+    <footer class="ls-footer">
+      <div>&copy; 2026 EventSphere. All rights reserved.</div>
+      <div class="ls-footer-links">
+        <a href="#">About</a>
+        <a href="#">Contact</a>
+        <a href="#">Privacy</a>
+        <a href="#">Terms</a>
+      </div>
+    </footer>
   </div>
 
 </body>
